@@ -1,0 +1,8 @@
+@media screen and (max-width: 991px) {
+    .picker.modal-dialog {
+        max-width: 355px !important;
+    }
+    .picker.modal-dialog-content.picker-dialog-content{
+        max-width: 355px !important;
+    }
+}
