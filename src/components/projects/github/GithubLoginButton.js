@@ -41,7 +41,7 @@ const GithubLoginButton=()=>{
         <GitHubLogin 
         clientId={process.env.REACT_APP_GITHUB_API_CLIENT_ID}
         clientSecret={process.env.REACT_APP_GITHUB_API_SECRET}
-        redirectUri={`https://localhost:3000`} //required, unless you want to get "code not found" error message
+        redirectUri={process.env.REACT_APP_FRONT_END_BASE_URL} //required, unless you want to get "code not found" error message
         onSuccess={onSuccess}
         onFailure={onFailure}/>
        
