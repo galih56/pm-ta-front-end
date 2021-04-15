@@ -2,6 +2,7 @@
   "name": "ta-pm",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://ta-pm-reactjs.herokuapp.com//",
   "dependencies": {
     "@dabeng/react-orgchart": "^1.0.0",
     "@date-io/date-fns": "^2.10.6",
@@ -67,7 +68,7 @@
   "browserslist": {
     "production": [
       ">0.2%",
-      "not dead",
+      "not dead"
       "not op_mini all"
     ],
     "development": [
