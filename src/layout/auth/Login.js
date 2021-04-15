@@ -66,7 +66,7 @@ const SignIn = (props) => {
         if (email.trim() == '' || password.trim() == '') setInputRequireAlert(true);
         else setInputRequireAlert(false);
         const config = {
-            mode: 'no-cors', crossdomain: true, headers: { 'Content-Type': 'application/json' }
+           headers: { 'Content-Type': 'application/json' }
         }
         sendLoginRequest(global, body, config);
     }
