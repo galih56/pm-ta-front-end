@@ -40,7 +40,7 @@ const DialogActions = withStyles((theme) => ({
 }))(MuiDialogActions);
 
 export default function ModalCreateMember(props) {
-    var { open, projectId, exceptedUsers } = props;
+    var { open, projectId, exceptedUsers,onCreate } = props;
     var closeModal = props.handleClose;
     const history = useHistory();
     const [newMembers, setNewMembers] = useState([]);
@@ -60,11 +60,12 @@ export default function ModalCreateMember(props) {
                 const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
                 global.dispatch({ type: 'handle-fetch-error', payload: payload });
             });
+        console.log('getRoles')
     }
 
     useEffect(() => {
         getRoles();
-    }, []);
+    }, [open]);
 
     const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
 
@@ -72,7 +73,8 @@ export default function ModalCreateMember(props) {
         if (!window.navigator.onLine) handleSnackbar(`You are currently offline`, 'warning');
         if (newMembers.length <= 0 || !selectedRole) setShowAlert(true);
         else setShowAlert(false);
-        if (showAlert) {
+        
+        if (!showAlert) {
             const body = { projectId: projectId, members: newMembers, roleId: selectedRole }
             const config = { mode: 'no-cors', crossdomain: true }
             const url = process.env.REACT_APP_BACK_END_BASE_URL + 'member/';
@@ -80,15 +82,18 @@ export default function ModalCreateMember(props) {
             axios.defaults.headers.post['Content-Type'] = 'application/json';
             axios.post(url, body, config)
                 .then((result) => {
+                    console.log('create members ',result.data)
                     // global.dispatch({ type: 'create-new-member', payload: result.data });
+                    onCreate(result.data)
                     handleSnackbar(`New members successfuly created`, 'success');
                     setNewMembers([]);
-                    setRoles(null);
+                    closeModal();
                 }).catch((error) => {
                     const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
                     global.dispatch({ type: 'handle-fetch-error', payload: payload });
                 });
         }
+        
     }
 
     const checkIfAuthenticated = () => {
@@ -99,7 +104,11 @@ export default function ModalCreateMember(props) {
                         <Grid container spacing={2} style={{ paddingLeft: 3, paddingRight: 3 }} >
                             {showValidation()}
                             <Grid item lg={12} md={12} sm={12} xs={12} >
-                                <UserSearchBar onChange={(value) => setNewMembers(value)} exceptedUsers={exceptedUsers} />
+                                <UserSearchBar 
+                                    onChange={(value) => setNewMembers(value)} 
+                                    exceptedUsers={exceptedUsers.map(function(member){
+                                        return {...member.user,role:member.role}
+                                    })} />
                             </Grid>
                             <Grid item lg={12} md={12} sm={12} xs={12} >
                                 <SelectRole onChange={(value) => setSelectedRole(value)} data={roles} />
@@ -129,6 +138,7 @@ export default function ModalCreateMember(props) {
             )
         }
     }
+
     return (
         <Dialog aria-labelledby="Create a new member" open={open} fullWidth={true} maxWidth={'md'}>
             <DialogTitle onClose={

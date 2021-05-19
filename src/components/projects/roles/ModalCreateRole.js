@@ -1,17 +1,16 @@
+import 'fontsource-roboto';
 import React, { useState, useContext } from 'react';
 import { useHistory } from 'react-router-dom';
-import 'fontsource-roboto';
-import axios from 'axios';
-import Alert from '@material-ui/lab/Alert';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 import { Grid, Button, Dialog, IconButton, TextField } from '@material-ui/core/';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
-import UserContext from '../../context/UserContext';
+import UserContext from './../../../context/UserContext';
 import CloseIcon from '@material-ui/icons/Close';
 import { useSnackbar } from 'notistack';
-import OccupationSearchBar from './../widgets/OccupationSearchBar';
+import axios from 'axios';
+import Alert from '@material-ui/lab/Alert';
 
 const styles = (theme) => ({
     root: { margin: 0, padding: theme.spacing(2) },
@@ -46,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
     margin: { margin: theme.spacing(1) },
 }));
 
-export default function ModalCreateOccupation(props) {
+export default function ModalCreateRole(props) {
     const classes = useStyles();
     var open = props.open;
     var closeModal = props.closeModal;
@@ -63,14 +62,13 @@ export default function ModalCreateOccupation(props) {
         const config = { mode: 'no-cors', crossdomain: true }
         if (!window.navigator.onLine) handleSnackbar(`You are currently offline`, 'warning');
         else {
-            const url = process.env.REACT_APP_BACK_END_BASE_URL + 'occupation';
+            const url = process.env.REACT_APP_BACK_END_BASE_URL + 'memberrole';
             axios.defaults.headers.common['Authorization'] = global.state.token;
             axios.defaults.headers.post['Content-Type'] = 'application/json';
             axios.post(url, body, config)
                 .then((result) => {
                     setName('');
-                    setChildren([]);
-                    handleSnackbar(`A new occupation successfully created`, 'success');
+                    handleSnackbar(`A new role successfully created`, 'success');
                     closeModal();
                     props.onCreate(result.data);
                 }).catch((error) => {
@@ -94,8 +92,7 @@ export default function ModalCreateOccupation(props) {
                                     onChange={(e) => setName(e.target.value)}
                                     style={{ width: '100%' }}
                                 />
-                                <OccupationSearchBar label={"Search lower occupations"} onChange={value => setChildren(value)} exceptedData={[]} defaultValue={[]} />
-                            </Grid>
+                                 </Grid>
                         </Grid>
                     </DialogContent>
                     <DialogActions>
@@ -112,9 +109,9 @@ export default function ModalCreateOccupation(props) {
         }
     }
     return (
-        <Dialog aria-labelledby="Create a occupation" open={open} className={classes.dialog}
+        <Dialog aria-labelledby="Create a role" open={open} className={classes.dialog}
             maxWidth={'md'} fullwidth={"true"}>
-            <DialogTitle onClose={() => closeModal()}>Create a occupation</DialogTitle>
+            <DialogTitle onClose={() => closeModal()}>Create a role</DialogTitle>
             { checkIfAuthenticated(global, classes)}
         </Dialog>
     );

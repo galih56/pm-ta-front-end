@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { withRouter, useHistory } from 'react-router-dom';
-import {
-    Button, TextField, FormControlLabel, Checkbox,
-    Grid, Typography, Container
-} from '@material-ui/core/';
+import Button  from '@material-ui/core/Button';
+import TextField  from '@material-ui/core/TextField';
+import Checkbox  from '@material-ui/core/Checkbox';
+import Grid  from '@material-ui/core/Grid';
+import Typography  from '@material-ui/core/Typography';
+import Container  from '@material-ui/core/Container';
 import axios from 'axios';
 import UserContext from '../../context/UserContext';
 import GoogleLogin from 'react-google-login';
@@ -46,6 +48,7 @@ const SignIn = (props) => {
                         switch (error.response.status) {
                             case 403:
                                 handleSnackbar(`Wrong Credentials`, 'warning');
+                                setWrongCredentialAlert(true);
                                 break;
                             default:
                                 handleSnackbar(`Server Error : ${error.response.statusText} (${error.response.status})`, 'error');

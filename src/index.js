@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useReducer } from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch, Redirect } from "react-router-dom";
 import 'fontsource-roboto';
 import Layout from "./layout/Layout";
 import UserContext, {
@@ -40,6 +40,7 @@ const checkAuthentication = (payload, state) => {
     } else history.push('/auth');
     return state;
 }
+
 const handleFetchError = (payload, state) => {
     const { error, snackbar, dispatch, history } = payload;
     console.log(error);
@@ -157,6 +158,7 @@ function RemoveTrailingSlashes({ path }) {
 const App = () => {
     //using array destructuring
     const [state, dispatch] = useReducer(reducer, initState);
+
     return (
         <UserContext.Provider value={{ state, dispatch }}>
             <SnackbarProvider maxSnack={5}>
@@ -165,7 +167,8 @@ const App = () => {
                         <Layout>
                             <React.Suspense fallback={<LinearProgress />}>
                                 <Switch>
-                                    <Route path='/' exact ><Redirect to='/projects' /></Route>{/* passing props ke component melalui route gak bisa langsung, jadi harus pakai anon function ke props render yg dimiliki component Route */}
+                                    <Route path='/' exact ><Redirect to='/projects' /></Route>
+                                    {/* passing props ke component melalui route gak bisa langsung, jadi harus pakai anon function ke props render yg dimiliki component Route */}
                                     <Route path="/my-tasks" render={(props) => (<TaskList {...props} ></TaskList>)} />
                                     <Route path="/users" render={(props) => (<UserInformation {...props} ></UserInformation>)} />
                                     <Route path='/auth' render={(props) => (<ModalAuthentication />)} />

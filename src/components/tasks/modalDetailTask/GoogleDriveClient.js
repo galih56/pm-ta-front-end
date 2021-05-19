@@ -11,12 +11,13 @@ const GoogleDriveButton = (props) => {
     const global = useContext(UserContext);
     const payload = props.payload;
 
-    var developerKey = process.env.REACT_APP_GOOGLE_DRIVE_API_KEY;
-    var clientId = process.env.REACT_APP_GOOGLE_DRIVE_CLIENT_ID;
+    var developerKey = process.env.REACT_APP_GOOGLE_API_KEY;
+    var clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
     var appId = "tugas-akhir-288302";
-    var scope = ['https://www.googleapis.com/auth/drive.file','https://www.googleapis.com/auth/drive.readonly'];
+    var scope = ['https://www.googleapis.com/auth/drive.readonly'];
 
     function createPicker(google, oauthToken) {
+        console.log('createPicker : ',google,oauthToken)
         if (google && oauthToken) {
             var view = new google.picker.View(google.picker.ViewId.DOCS);
             view.setMimeTypes("image/png,image/jpeg,image/jpg,application/pdf,application/zip");
@@ -66,17 +67,20 @@ const GoogleDriveButton = (props) => {
                 <Icon icon={googleDrive} />
             </IconButton> */}
             <GooglePicker 
-                    clientId={clientId}
-                    developerKey={developerKey}
-                    scope={scope}
-                    onChange={data => console.log('on change:', data)}
-                    onAuthFailed={data => console.log('on auth failed:', data)}
-                    multiselect={true}
-                    navHidden={true}
-                    // mimeTypes={['image/png', 'image/jpeg', 'image/jpg']}
-                    viewId={'DOCS'}
-                    createPicker={createPicker}
-            >
+                clientId={clientId}
+                developerKey={developerKey}
+                scope={scope}
+                onChange={data => console.log('on change:', data)}
+                onAuthFailed={data =>{ 
+                    console.log('on auth failed:', data)
+                }}
+                multiselect={true}
+                navHidden={true}
+                authImmediate={false}
+                // mimeTypes={['image/png', 'image/jpeg', 'image/jpg']}
+                viewId={'DOCS'}
+                createPicker={createPicker}
+        >
                 <IconButton>
                     <Icon icon={googleDrive} />
                 </IconButton>

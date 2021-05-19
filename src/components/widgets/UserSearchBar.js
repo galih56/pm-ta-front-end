@@ -36,6 +36,12 @@ export default function UserSearchbar(props) {
         var exists = false;
         for (let i = 0; i < arr.length; i++) {
             const item = arr[i];
+            if('user' in item){
+                if (id == item.user.id) {
+                    exists = true;
+                    break;
+                }
+            }
             if (id == item.id) {
                 exists = true;
                 break;
@@ -46,10 +52,10 @@ export default function UserSearchbar(props) {
 
     useEffect(() => {
         global.dispatch({ type: 'check-authentication', payload: { history: history } });
-        var filteredOptions = users.filter((option) => {
+        var filteredOptions = users.filter((option) => { 
             if (!checkExistingMember(option.id, exceptedUsers)
                 && !'administrator sistem'.includes(option.name.toLowerCase())) return option;
-        })
+        });
         filteredOptions = filteredOptions.map((option) => {
             const firstLetter = option.name[0].toUpperCase();
             return { firstLetter: /[0-9]/.test(firstLetter) ? '0-9' : firstLetter, ...option }
@@ -63,7 +69,7 @@ export default function UserSearchbar(props) {
             freeSolo
             options={options.sort((a, b) => -b.firstLetter.localeCompare(a.firstLetter))}
             groupBy={(option) => option.firstLetter}
-            getOptionLabel={(option) => option.name}
+            getOptionLabel={(option) => `${option.name} - (${option.email})`}
             style={{ width: '100%' }}
             renderInput={(params) => <TextField {...params} label="Search Users" variant="standard"/>}
             onChange={(event, options) => handleValueChanges(options)}

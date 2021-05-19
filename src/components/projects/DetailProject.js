@@ -19,26 +19,28 @@ const Files = lazy(() => import('../widgets/Files'));
 const EventTimeline = lazy(() => import('../widgets/EventTimeline'));
 const ProjectInformations = lazy(() => import('../projects/ProjectInformations'));
 const MemberList = lazy(() => import('./members/MemberList'));
+const RoleList = lazy(() => import('./roles/RoleList'));
 const Repositories = lazy(() => import('./github/Repositories'));
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
     return (
-        <div
+        <Box
             role="tabpanel"
             hidden={value !== index}
             {...other}
         >
-            {value === index && (
-                <Box p={3}>
-                    {children}
-                </Box>
-            )}
-        </div>
+            {children}
+        </Box>
     );
 }
 
-const useStyles = makeStyles((theme) => ({ root: { flexGrow: 1, backgroundColor: theme.palette.background.paper } }));
+const useStyles = makeStyles((theme) => (
+    { root: { flexGrow: 1, backgroundColor: theme.palette.background.paper },
+    tabPanel:{ 
+    padding: '0.5em',
+    minHeight:'500px !important'} 
+}));
 
 const getDataFromGlobalState = (globalState, projectId) => {
     var data = null;
@@ -186,7 +188,7 @@ const DetailProject = (props) => {
                         open: false 
                     })}
                     refreshDetailProject={getDetailProject}
-                    projectId={params.id}
+                    detailProject={detailProject}
                     initialState={clickedMeeting} />
             )
         }
@@ -239,14 +241,18 @@ const DetailProject = (props) => {
                                     <TabPanel
                                         value={tabState}
                                         index={1}
-                                        style={{ padding: '0.5em' }}>
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={()=>handleModalCreateList(true)}
-                                            style={{ marginBottom: '1em' }}
-                                            startIcon={<AddIcon />}> Add new list </Button>
-                                        <GanttChart detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                        className={classes.tabPanel}>
+                                        <Grid container >   
+                                            <Grid item xl={12} md={12} sm={12} xs={12} >
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={()=>handleModalCreateList(true)}
+                                                style={{ marginBottom: '1em' }}
+                                                startIcon={<AddIcon />}> Add new list </Button>
+                                            <GanttChart detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                            </Grid>
+                                        </Grid>
                                     </TabPanel>
                                 )
                             }} />
@@ -258,7 +264,12 @@ const DetailProject = (props) => {
                                         value={tabState}
                                         index={2}
                                         style={{ padding: '0.5em' }}>
-                                        <EventTimeline detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                        <Grid container >   
+                                            <Grid item xl={12} md={12} sm={12} xs={12} >
+                                                <EventTimeline detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                            </Grid>
+                                        </Grid>
+                                        
                                     </TabPanel>
                                 )
                             }} />
@@ -270,13 +281,17 @@ const DetailProject = (props) => {
                                         value={tabState}
                                         index={3}
                                         style={{ padding: '0.5em' }}>
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={()=>handleModalCreateMeeting(true)}
-                                            style={{ marginBottom: '1em' }}
-                                            startIcon={<AddIcon />}> Create new meeting </Button>
-                                        <Calendar detailProject={detailProject} handleDetailMeetingOpen={handleDetailMeetingOpen} />
+                                        <Grid container >   
+                                            <Grid item xl={12} md={12} sm={12} xs={12} >
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={()=>handleModalCreateMeeting(true)}
+                                                    style={{ marginBottom: '1em' }}
+                                                    startIcon={<AddIcon />}> Create new meeting </Button>
+                                                <Calendar detailProject={detailProject} handleDetailMeetingOpen={handleDetailMeetingOpen} />
+                                            </Grid>
+                                        </Grid>
                                     </TabPanel>
                                 )
                             }} />
@@ -288,7 +303,11 @@ const DetailProject = (props) => {
                                         value={tabState}
                                         index={4}
                                         style={{ padding: '0.5em' }}>
-                                        <Files projectId={detailProject.id} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                        <Grid container >   
+                                            <Grid item xl={12} md={12} sm={12} xs={12} >
+                                                <Files projectId={detailProject.id} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                            </Grid>
+                                        </Grid>
                                     </TabPanel>
                                 )
                             }} />
@@ -304,8 +323,13 @@ const DetailProject = (props) => {
                                             <ProjectInformations detailProject={detailProject} />
                                             <Repositories/>
                                         </Grid>
-                                        <Grid item xl={12} md={12} sm={12} xs={12} >
-                                            <MemberList projectId={params.id} data={detailProject.members} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                        <Grid container >    
+                                            <Grid item xl={7} md={7} sm={12} xs={12} >
+                                                <MemberList projectId={params.id} data={detailProject.members} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                            </Grid>
+                                            <Grid item xl={5} md={5} sm={12} xs={12} >
+                                                <RoleList projectId={params.id} />
+                                            </Grid>
                                         </Grid>
                                     </TabPanel>
                                 )

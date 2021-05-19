@@ -17,7 +17,6 @@ const getAuthDataFromStorage = () => {
 }
 
 const storeAuthData = (payload) => {
-    console.log(payload);
     const auth = { token: payload.token, authenticated: true, };
     const user = {
         id: payload.user.id,

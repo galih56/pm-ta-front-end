@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import UserContext from '../../../context/UserContext';
+import UserContext from './../../../context/UserContext';
 import PropTypes from 'prop-types';
 import {  makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
@@ -11,19 +11,14 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import Typography from '@material-ui/core/Typography';
-import Collapse from '@material-ui/core/Collapse';
-import IconButton from '@material-ui/core/IconButton';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { visuallyHidden } from '@material-ui/utils';
 import { useSnackbar } from 'notistack';
-import ModalDetailMember from './ModalDetailMember/ModalDetailMember';
-import TaskList from '../../tasks/TaskList';
 import moment from 'moment';
 import axios from 'axios';
-import ModalCreateMember from './ModalCreateMember';
+import ModalCreateRole from './ModalCreateRole';
+import ModalDetailRole from './ModalDetailRole';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) return -1;
@@ -48,9 +43,7 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-    { id: 'name', align: 'left', disablePadding: true, label: 'Name' },
-    { id: 'role', align: 'left', disablePadding: false, label: 'Role' },
-    { id: 'last login', align: 'right', disablePadding: false, label: 'Last login' },
+    { id: 'name', align: 'left', label: 'Name' },
 ];
 
 const useStyles = makeStyles((theme) => ({
@@ -65,7 +58,6 @@ function EnhancedTableHead(props) {
     return (
         <TableHead>
             <TableRow>
-                <TableCell></TableCell>
                 {headCells.map((headCell) => (
                     <TableCell
                         key={headCell.id}
@@ -94,52 +86,36 @@ function EnhancedTableHead(props) {
 
 export default function EnhancedTable(props) {
     const classes = useStyles();
-    const handleDetailTaskOpen = props.handleDetailTaskOpen;
     const projectId = props.projectId;
-    let initStateUser = { id: null, name: '', email: '', role: { id: null, name: '' } }
-    const [clickedUser, setClickedUser] = useState(initStateUser);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [newMemberOpen, setNewMemberOpen] = useState(false);
-
+    const [newRoleOpen, setNewRoleOpen] = useState(false);
+    const [modalDetailOpen,setModalDetailOpen]=useState({open:false,data:{ id:null, name:'' }});
     const [rows, setRows] = useState([]);
     const [order, setOrder] = useState('asc');
     const [orderBy, setOrderBy] = useState('end');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    const handleModalOpen = (user, open) => {
-        setModalOpen(open);
-        setClickedUser(user);
-    }
-
-    const showUserProfile = () => {
-        if (clickedUser.id != null && clickedUser.id !== undefined && modalOpen == true) {
-            return (
-                <ModalDetailMember
-                    open={modalOpen}
-                    closeModal={() => handleModalOpen(initStateUser, false) }
-                    initialState={clickedUser} 
-                    handleDetailTaskOpen={handleDetailTaskOpen}
-                    onUpdate={(newValue)=>{
-                        setRows(rows.map(function(row){
-                            if(row.id==newValue.id) return newValue;
-                            else return row;
-                        }));
-                    }}
-                    onDelete={(deletedValue)=>{
-                        setRows(rows.filter(function(row){
-                            if(row.id!=deletedValue.id)return row;
-                        }))
-                    }
-                    }
-                    />
-            )
-        }
-    }
+    let global = useContext(UserContext);
+    const { enqueueSnackbar } = useSnackbar();
+    const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
 
     useEffect(() => {
-        setRows(props.data);
-    }, [props.data]);
+        getRoles();
+    }, []);
+
+    const getRoles = () => {
+        const config = { mode: 'no-cors', crossdomain: true, }
+        const url = process.env.REACT_APP_BACK_END_BASE_URL + 'memberrole';
+        axios.defaults.headers.common['Authorization'] = global.state.token;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.get(url, {}, config)
+            .then((result) => {
+                setRows(result.data);
+            }).catch((error) => {
+                const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
+                global.dispatch({ type: 'handle-fetch-error', payload: payload });
+            });
+    }
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -159,7 +135,7 @@ export default function EnhancedTable(props) {
     return (
         <div className={classes.root}>
             <Grid>
-                <Typography variant="h6">Members  <Button color="primary" component="span" onClick={() => setNewMemberOpen(true)}>+ Add new member</Button></Typography>
+                <Typography variant="h6">Roles  <Button color="primary" component="span" onClick={() => setNewRoleOpen(true)}>+ Add new role</Button></Typography>
             </Grid>
             <TableContainer>
                 <Table className={classes.table} size={'medium'} >
@@ -175,7 +151,11 @@ export default function EnhancedTable(props) {
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                             .map((row, index) => {
                                 return (
-                                    <Row key={row.id} data={row} handleDetailTaskOpen={handleDetailTaskOpen} handleModalOpen={handleModalOpen} />
+                                    <TableRow key={row.id} hover onClick={()=>{
+                                        setModalDetailOpen({open:true,data:row})
+                                    }} >
+                                        <TableCell scope="row" > {row.name}</TableCell>
+                                    </TableRow>
                                 );
                             })}
                         {emptyRows > 0 && (
@@ -195,75 +175,29 @@ export default function EnhancedTable(props) {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
-            <ModalCreateMember 
-                projectId={projectId} 
-                open={newMemberOpen} 
-                handleClose={() => setNewMemberOpen(false)} 
-                exceptedUsers={rows} 
-                onCreate={(newMembers)=>{
-                    console.log('onCreate',newMembers);
-                    setRows([...rows,...newMembers])
-                }}
+            <ModalCreateRole projectId={projectId} 
+                open={newRoleOpen} 
+                closeModal={() => setNewRoleOpen(false)}
+                onCreate={(newRole)=>{
+                    setRows([...rows,newRole])
+                }} 
             />
-            {showUserProfile()}
+            <ModalDetailRole open={modalDetailOpen.open} 
+                            initialState={modalDetailOpen.data} 
+                            closeModal={()=>{
+                                setModalDetailOpen({
+                                    open:false,
+                                    data:{ id:null, name:'' }
+                                });
+                            }} 
+                            onUpdate={(value)=>{
+                                console.log('onUpdate : ',value)
+                                setRows(rows.map(function(item){
+                                    if(item.id==value.id) return value;
+                                    return item;
+                                }));
+                            }}/>
         </div>
-    );
-}
-
-function Row(props) {
-    const { data, handleDetailTaskOpen, handleModalOpen } = props;
-    const [open, setOpen] = useState(false);
-    const [tasks, setTasks] = useState([]);
-    let global = useContext(UserContext);
-
-    const getTasks = (id) => {
-        const config = { mode: 'no-cors', crossdomain: true, }
-        const url = process.env.REACT_APP_BACK_END_BASE_URL + 'member/' + id + '/tasks';
-        axios.defaults.headers.common['Authorization'] = global.state.token;
-        axios.defaults.headers.post['Content-Type'] = 'application/json';
-        axios.get(url, {}, config)
-            .then((result) => {
-                setTasks(result.data);
-            }).catch((error) => {
-                const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
-                global.dispatch({ type: 'handle-fetch-error', payload: payload });
-            });
-    }
-
-    return (
-        <React.Fragment>
-            <TableRow
-                hover key={data.id}
-            >
-                <TableCell>
-                    <IconButton aria-label="expand row" size="small"
-                        onClick={() => {
-                            getTasks(data.id);
-                            setOpen(!open);
-                        }}
-                    > {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />} </IconButton>
-                </TableCell>
-                <TableCell component="th" scope="row" style={{ cursor: 'pointer' }}
-                    onClick={() => {
-                        handleModalOpen(data, true);
-                    }}> {data.user.name} <br />({data.user.email}) </TableCell>
-                <TableCell>{data.role.name}</TableCell>
-                <TableCell align="right">
-                    {data.user.last_login ? moment(data.user.last_login).format('DD MMM YYYY') : ''}
-                </TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                    <Collapse in={open} timeout="auto">
-                    <Grid container>
-                        <Grid xs={12} sm={12} md={12} lg={12} lg={12} item style={{ padding: '1em' }}>
-                            <TaskList data={tasks} handleDetailTaskOpen={handleDetailTaskOpen} />
-                        </Grid>
-                    </Grid>
-                    </Collapse>
-                </TableCell>
-            </TableRow>
-        </React.Fragment>
     );
 }
 

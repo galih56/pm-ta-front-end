@@ -42,37 +42,47 @@ const OpenEditForm = ({ isEdit, data, setData }) => {
     if (isEdit) {
         return (
             <Grid container spacing={2} style={{ paddingLeft: 4, paddingRight: 4 }} >
-                <FormControlLabel
-                    label={"Verified"}
-                    control={
-                        <Checkbox
-                            checked={data.verified}
-                            onChange={(e) => setData({ ...data, verified: e.target.checked })}
-                        />
-                    }
-                    className={classes.textfield}
-                />
-                <TextField
-                    defaultValue={data.name}
-                    onChange={(e) => setData({ ...data, name: e.target.value })}
-                    style={{ width: '100%' }}
-                />
-                <TextField
-                    defaultValue={data.email}
-                    onChange={(e) => setData({ ...data, email: e.target.value })}
-                    className={classes.textfield}
-                />
-                <FormControl className={classes.textfield} >
-                    <InputLabel>Occupations</InputLabel>
-                    <Select onChange={e => {
-                        setData({ ...data, occupation: e.target.value });
-                    }}
-                        defaultValue={data.occupation.id}>
-                        {
-                            occupations.map((occupation, index) => (<MenuItem value={occupation.id} key={occupation.id}>{occupation.name}</MenuItem>))
-                        } 
-                    </Select>
-                </FormControl>
+                <Grid item lg={12} md={12} sm={12} xs={12} align="center">
+                    <FormControlLabel
+                        label={"Verified"}
+                        control={
+                            <Checkbox
+                                checked={data.verified}
+                                onChange={(e) => setData({ ...data, verified: e.target.checked })}
+                            />
+                        }
+                        className={classes.textfield}
+                    />
+                </Grid>
+                <Grid item lg={12} md={12} sm={12} xs={12} align="center">
+                    <TextField
+                        defaultValue={data.name}
+                        onChange={(e) => setData({ ...data, name: e.target.value })}
+                        style={{ width: '100%' }}
+                        variant="standard"
+                    />
+                </Grid>
+                <Grid item lg={12} md={12} sm={12} xs={12} align="center">
+                    <TextField
+                        defaultValue={data.email}
+                        onChange={(e) => setData({ ...data, email: e.target.value })}
+                        className={classes.textfield}
+                        variant="standard"
+                    />
+                </Grid>
+                <Grid item lg={12} md={12} sm={12} xs={12} align="center">
+                    <FormControl className={classes.textfield} >
+                        <InputLabel>Occupations</InputLabel>
+                        <Select onChange={e => {
+                            setData({ ...data, occupation: e.target.value });
+                        }}
+                            defaultValue={data.occupation.id}>
+                            {
+                                occupations.map((occupation, index) => (<MenuItem value={occupation.id} key={occupation.id}>{occupation.name}</MenuItem>))
+                            } 
+                        </Select>
+                    </FormControl>
+                </Grid>
             </Grid>
         )
     } else {

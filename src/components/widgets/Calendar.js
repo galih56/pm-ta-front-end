@@ -1,11 +1,9 @@
-import React, { useState, useEffect, createRef, memo, useCallback } from 'react';
-// import { Calendar } from '@fullcalendar/core';
+import React, { useState, useEffect, createRef} from 'react';
 import Fullcalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-
 
 const Calendar = (props) => {
     var calendarRef = createRef();
@@ -36,7 +34,7 @@ const Calendar = (props) => {
                 initialView='dayGridMonth'
                 plugins={[interactionPlugin, dayGridPlugin, timeGridPlugin, listPlugin]}
                 headerToolbar={{
-                    left: 'title,list,prev,today,next',
+                    left: 'title,prev,today,next',
                     center: '',
                     right: 'listMonth,dayGridMonth,timeGridWeek,timeGridDay'
                 }}

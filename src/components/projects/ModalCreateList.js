@@ -79,7 +79,7 @@ export default function ModalCreateList(props) {
                 closeModal();
                 refreshData();
                 global.dispatch({ type: 'create-new-list', payload: result.data });
-                handleSnackbar(`A new list successfuly created`, 'success');
+                handleSnackbar(`A new list successfully created`, 'success');
             }).catch((error) => {
                 const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
                 global.dispatch({ type: 'handle-fetch-error', payload: payload });

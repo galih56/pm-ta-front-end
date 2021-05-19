@@ -2,7 +2,7 @@
   "name": "ta-pm",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://ta-pm-reactjs.herokuapp.com//",
+  "homepage": "https://app.herokuapp.com/",
   "dependencies": {
     "@dabeng/react-orgchart": "^1.0.0",
     "@date-io/date-fns": "^2.10.6",
@@ -15,7 +15,6 @@
     "@fullcalendar/react": "^5.5.0",
     "@fullcalendar/timegrid": "^5.5.1",
     "@iconify-icons/mdi": "^1.1.12",
-    "@iconify/react": "^1.1.4",
     "@material-ui/core": "^5.0.0-alpha.20",
     "@material-ui/data-grid": "^4.0.0-alpha.15",
     "@material-ui/icons": "^4.9.1",
@@ -31,6 +30,7 @@
     "fontsource-roboto": "^3.0.3",
     "gantt-schedule-timeline-calendar": "^3.3.4",
     "gapi-script": "^1.0.2",
+    "ibm-gantt-chart-react": "^0.5.14",
     "material-ui-dropzone": "^3.5.0",
     "moment": "^2.29.1",
     "notistack": "^1.0.4-alpha.0",
@@ -40,8 +40,10 @@
     "react-dom": "^17.0.2",
     "react-drive": "^1.0.1",
     "react-github-login": "^1.0.3",
+    "react-google-calendar-api": "^1.3.1",
     "react-google-login": "^5.1.22",
     "react-google-picker": "^0.1.0",
+    "react-login-github": "^1.0.7",
     "react-number-format": "^4.4.1",
     "react-oauth-flow": "^1.2.0",
     "react-router-dom": "^5.2.0",
@@ -68,7 +70,7 @@
   "browserslist": {
     "production": [
       ">0.2%",
-      "not dead"
+      "not dead",
       "not op_mini all"
     ],
     "development": [
@@ -76,5 +78,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@iconify-icons/logos": "^1.1.9",
+    "@iconify/react": "^1.1.4"
   }
 }

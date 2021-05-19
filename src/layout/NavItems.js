@@ -21,15 +21,13 @@ export const MainListItems = () => (
                 Home
             </ListItemText>
         </ListItem>
-        <ListItem button component={Link} to="/my-tasks" >
-            <ListItemIcon>
-                <AssignmentIcon />
-            </ListItemIcon>
-            <ListItemText>
-                My Tasks
-            </ListItemText>
-        </ListItem>
         <ListItem button component={Link} to="/teams" >
+            <ListItemIcon>
+                <PeopleIcon />
+            </ListItemIcon>
+            <ListItemText> Teams </ListItemText>
+        </ListItem>
+        <ListItem button component={Link} to="/reports" >
             <ListItemIcon>
                 <BarChartIcon />
             </ListItemIcon>
