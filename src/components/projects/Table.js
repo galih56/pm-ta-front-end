@@ -1,24 +1,28 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
-import UserContext from '../../../../context/UserContext';
-import { Link, useHistory } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import UserContext from '../../../context/UserContext';
 import PropTypes from 'prop-types';
-import { lighten, makeStyles } from '@material-ui/core/styles';
-import {
-    Table, TableBody, TableCell, TableContainer, TablePagination,
-    TableHead, TableRow, TableSortLabel, Typography, Paper, Box,
-    Collapse, IconButton, Grid, Button
-} from '@material-ui/core';
+import {  makeStyles } from '@material-ui/core/styles';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TablePagination from '@material-ui/core/TablePagination';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
+import Typography from '@material-ui/core/Typography';
+import Collapse from '@material-ui/core/Collapse';
+import IconButton from '@material-ui/core/IconButton';
+import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
-import DoneAllIcon from '@material-ui/icons/DoneAll';
-import FilterListIcon from '@material-ui/icons/FilterList';
 import { visuallyHidden } from '@material-ui/utils';
 import { useSnackbar } from 'notistack';
-import ModalDetailUser from '../../../users/ModalDetailUser/ModalDetailUser';
-import TaskList from '../../TaskList';
+import ModalDetailMember from './ModalDetailMember/ModalDetailMember';
+import TaskList from '../../tasks/TaskList';
 import moment from 'moment';
 import axios from 'axios';
-import ModalCreateMember from './ModalCreateMember';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) return -1;
@@ -91,6 +95,7 @@ export default function EnhancedTable(props) {
     const classes = useStyles();
     const handleDetailTaskOpen = props.handleDetailTaskOpen;
     const projectId = props.projectId;
+    const data = props.data;
     let initStateUser = { id: null, name: '', email: '', role: { id: null, name: '' } }
     const [clickedUser, setClickedUser] = useState(initStateUser);
     const [modalOpen, setModalOpen] = useState(false);
@@ -102,31 +107,13 @@ export default function EnhancedTable(props) {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    let global = useContext(UserContext);
-    const { enqueueSnackbar } = useSnackbar();
-    const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
-
     const handleModalOpen = (user, open) => {
         setModalOpen(open);
         setClickedUser(user);
     }
-
-    const showUserProfile = () => {
-        if (clickedUser.id != null && clickedUser.id !== undefined && modalOpen == true) {
-            return (
-                <ModalDetailUser
-                    open={modalOpen}
-                    closeModal={() => {
-                        handleModalOpen(initStateUser, false)
-                    }}
-                    initialState={clickedUser} />
-            )
-        }
-    }
-
     useEffect(() => {
-        setRows(props.data);
-    }, [props.data]);
+        setRows(data);
+    }, [data]);
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -149,7 +136,7 @@ export default function EnhancedTable(props) {
                 <Typography variant="h6">Members  <Button color="primary" component="span" onClick={() => setNewMemberOpen(true)}>+ Add new member</Button></Typography>
             </Grid>
             <TableContainer>
-                <Table className={classes.table} aria-labelledby="tableTitle" size={'medium'} >
+                <Table className={classes.table} size={'medium'} >
                     <EnhancedTableHead
                         classes={classes}
                         order={order}
@@ -162,7 +149,7 @@ export default function EnhancedTable(props) {
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                             .map((row, index) => {
                                 return (
-                                    <Row key={row.id} data={row} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                    <Row key={row.id} data={row} handleDetailTaskOpen={handleDetailTaskOpen} handleModalOpen={handleModalOpen} projectId={projectId}/>
                                 );
                             })}
                         {emptyRows > 0 && (
@@ -182,31 +169,14 @@ export default function EnhancedTable(props) {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
-            <ModalCreateMember projectId={projectId} open={newMemberOpen} handleClose={() => setNewMemberOpen(true)} />
-            {showUserProfile()}
         </div>
     );
 }
 
 function Row(props) {
-    const { data, handleDetailTaskOpen } = props;
+    const { data, handleDetailTaskOpen, handleModalOpen } = props;
     const [open, setOpen] = useState(false);
-    const [tasks, setTasks] = useState([]);
-    let global = useContext(UserContext);
-
-    const getTasks = (id) => {
-        const config = { mode: 'no-cors', crossdomain: true, }
-        const url = process.env.REACT_APP_BACK_END_BASE_URL + 'user/' + id + '/tasks';
-        axios.defaults.headers.common['Authorization'] = global.state.token;
-        axios.defaults.headers.post['Content-Type'] = 'application/json';
-        axios.get(url, {}, config)
-            .then((result) => {
-                setTasks(result.data);
-            }).catch((error) => {
-                const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
-                global.dispatch({ type: 'handle-fetch-error', payload: payload });
-            });
-    }
+    const projectId=props.projectId;
 
     return (
         <React.Fragment>
@@ -223,7 +193,7 @@ function Row(props) {
                 </TableCell>
                 <TableCell component="th" scope="row" style={{ cursor: 'pointer' }}
                     onClick={() => {
-                        handleModalOpen(row, true);
+                        handleModalOpen(data, true);
                     }}> {data.name} <br />({data.email}) </TableCell>
                 <TableCell>{data.role.name}</TableCell>
                 <TableCell align="right">
@@ -233,7 +203,11 @@ function Row(props) {
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                     <Collapse in={open} timeout="auto">
-                        <TaskList data={tasks} handleDetailTaskOpen={handleDetailTaskOpen} />
+                    <Grid container>
+                        <Grid xs={12} sm={12} md={12} lg={12} lg={12} item style={{ padding: '1em' }}>
+                            <TaskList projectId={projectId} data={tasks} handleDetailTaskOpen={handleDetailTaskOpen} />
+                        </Grid>
+                    </Grid>
                     </Collapse>
                 </TableCell>
             </TableRow>

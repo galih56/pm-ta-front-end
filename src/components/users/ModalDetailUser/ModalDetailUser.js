@@ -61,7 +61,11 @@ export default function ModalDetailUser(props) {
     }, [props.initialState.id]);
 
     const saveChanges = () => {
-        let body = data;
+        let body = {
+            id: data.id, name: data.name, email: data.email, 
+            phone_number: data.phone_number,
+            occupation: data.occupation, profilePicture: ''
+        };
         if (window.navigator.onLine) {
             const config = { mode: 'no-cors', crossdomain: true }
             const url = process.env.REACT_APP_BACK_END_BASE_URL + `user/${props.initialState.id}`;

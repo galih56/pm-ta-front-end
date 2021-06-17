@@ -15,12 +15,9 @@ import MuiDialogContent from '@material-ui/core/DialogContent';
 import UserContext from '../../../context/UserContext';
 import CloseIcon from '@material-ui/icons/Close';
 import Alert from '@material-ui/lab/Alert';
-import SelectTag from '../SelectTag';
-import DateTimePicker from '@material-ui/lab/DateTimePicker';
-import AdapterDateFns from '@material-ui/lab/AdapterDateFns';
-import LocalizationProvider from '@material-ui/lab/LocalizationProvider';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
+import FormCreateNewTask from './../../tasks/FormCreateNewTask';
 
 const styles = (theme) => ({
     root: { margin: 0, padding: theme.spacing(2) },
@@ -65,25 +62,34 @@ const useStyles = makeStyles((theme) => ({
 
 const getListDetail = (globalState, laneId) => {
     const projects = globalState.projects;
-    for (let j = 0; j < projects.length; j++) {
-        const columns = projects[j].columns;
-        for (let i = 0; i < columns.length; i++) {
-            if (columns[i].id == laneId) {
-                const column = columns[i];
-                return column;
+    if(projects){
+        for (let j = 0; j < projects.length; j++) {
+            const columns = projects[j].columns;
+            for (let i = 0; i < columns.length; i++) {
+                if (columns[i].id == laneId) {
+                    const column = columns[i];
+                    return column;
+                }
             }
         }
+        return null;
     }
-    return null;
 }
 
 const EditLaneForm = (props) => {
     const classes = useStyles();
-    const { laneId, onAdd, onCancel } = props;
+    const { laneId, onAdd, onCancel,detailProject } = props;
     const [modalOpen, setModalOpen] = useState(true);
     const history = useHistory();
-    const initLaneState = { id: null, title: '', project: null };
-    const initCardState = { id: null, title: '', description: '', label: '', progress: 0, start: null, end: null, tags: [], listId: laneId,creator:null };
+    const initLaneState = { 
+        id: null, title: '', 
+        project: null
+    };
+    const initCardState = {
+        id: null, title: '', description: '', 
+        label: '', progress: 0, start: null, end: null, 
+        tags: [], listId: laneId,creator:null ,members:[]
+    };
     const [laneDetail, setLaneDetail] = useState(initLaneState);
     const [newCard, setNewCard] = useState(initCardState);
     const [isDeletingLane, setIsDeletingLane] = useState(false);
@@ -97,13 +103,9 @@ const EditLaneForm = (props) => {
 
     const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
 
-    const handleTagChanges = (tags) => setNewCard({ ...newCard, tags: tags });
-
     useEffect(() => {
         const detailList = getListDetail(global.state, laneId);
-        if (detailList) {
-            setLaneDetail(detailList);
-        }
+        if (detailList) setLaneDetail(detailList);
     }, [])
 
     const updateLane = () => {
@@ -140,8 +142,8 @@ const EditLaneForm = (props) => {
             axios.delete(url, { id: laneDetail.id }, config)
             .then((result) => {
                 handleSnackbar(`Data has been deleted`, 'success');
-                global.dispatch({ type: 'remove-list', payload: laneDetail });
                 setModalOpen(false);
+                global.dispatch({ type: 'remove-list', payload: laneDetail });
             }).catch((error) => {
                 const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history };
                 global.dispatch({ type: 'handle-fetch-error', payload: payload });
@@ -157,7 +159,7 @@ const EditLaneForm = (props) => {
                     <Typography variant="body2">Data will be permanently deleted. Are you sure?</Typography>
                     <br />
                     <Button onClick={() => setIsDeletingLane(false)}>Cancel</Button>
-                    <Button onClick={deleteList} variant="contained" color="secondary">Delete</Button>
+                    <Button onClick={()=>deleteList()} variant="contained" color="secondary">Delete</Button>
                 </Grid>
             );
         } else {
@@ -179,7 +181,13 @@ const EditLaneForm = (props) => {
                         <Tab label="Add new card" />
                     </Tabs>
                     <TabPanel value={tabState} index={0}>
-                        <Grid container spacing={2} style={{ paddingLeft: "1em", paddingRight: "1em",paddingTop:"1em" }} component="form" onSubmit={(e) => { e.preventDefault(); updateLane() }}>
+                        <Grid container spacing={2} 
+                            style={{ paddingLeft: "1em", paddingRight: "1em",paddingTop:"1em" }} 
+                            component="form" 
+                                onSubmit={(e) => { 
+                                    e.preventDefault();
+                                    updateLane() 
+                                }}>
                             <Grid item lg={12} md={12} sm={12} xs={12} >
                                 <TextField
                                     label="Title : "
@@ -194,68 +202,14 @@ const EditLaneForm = (props) => {
                         </Grid>
                     </TabPanel>
                     <TabPanel value={tabState} index={1}>
-                        <Grid container spacing={2} style={{ paddingLeft: "1em", paddingRight: "1em",paddingTop:"1em" }} component="form" onSubmit={(e) => { e.preventDefault(); handleAddCard() }} >
-                            <Grid item lg={7} md={7} sm={7} xs={12}>
-                                <Typography variant="h6"></Typography>
-                                <TextField
-                                    label="Title : "
-                                    onChange={
-                                        (e) => { setNewCard({ ...newCard, title: e.target.value }); }
-                                    }
-                                    placeholder={"Example : Redesigning UI"}
-                                    style={{ width: '100%' }}
-                                    variant="standard" 
-                                    required
-                                />
-                                <TextField
-                                    label="Label : "
-                                    placeholder={"Example : Main Task, High Priority"}
-                                    onChange={e => setNewCard({ ...newCard, label: e.target.value }) }
-                                    style={{ width: '100%' }} 
-                                    variant="standard" 
-                                    />
-                                <SelectTag onChange={handleTagChanges} isEdit={true} defaultValue={[]}/>
-                            </Grid>
-                            <Grid item lg={5} md={5} sm={5} xs={12} >
-                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                    <DateTimePicker   
-                                        renderInput={(props) => <TextField {...props}  variant="standard"/>}
-                                        value={newCard.start}
-                                        ampm={false}
-                                        onChange={newValue=>setNewCard({ ...newCard, start: newValue})}
-                                        required/>
-                                    <span style={{ marginLeft: '0.5em', marginRight: '0.5em' }}> to </span>
-                                    <DateTimePicker   
-                                        renderInput={(props) => <TextField {...props} variant="standard"/>}
-                                        value={newCard.end}
-                                        ampm={false}
-                                        onChange={newValue=>   setNewCard({ ...newCard, end: newValue }) }
-                                        required/> 
-                                </LocalizationProvider>  
-                                <TextField
-                                    label="Progress : (%)"
-                                    onChange={(e) => {
-                                        setNewCard({ ...newCard, progress: e.target.value });
-                                    }}
-                                    className={classes.textfield}
-                                    type="number"
-                                    variant="standard" 
-                                    required
-                                />
-                            </Grid>
-                            <Grid item lg={12} md={12} sm={12} xs={12}>
-                                <Typography>Description : </Typography>
-                                <TextField 
-                                    variant="standard" 
-                                    multiline 
-                                    rows={4}
-                                    style={{ width: '100%' }}
-                                    onChange={(e) => setNewCard({ ...newCard, description: e.target.value }) } />
-                            </Grid>
-                            <Grid item lg={12} md={12} sm={12} xs={12}>
-                                <Button type="submit" variant="contained" color="primary">Add</Button>
-                            </Grid>
-                        </Grid>
+                        <FormCreateNewTask 
+                            classes={classes} 
+                            newTask={newCard} 
+                            setNewTask={setNewCard}
+                            handleAddNewTask={handleAddCard}
+                            detailProject={detailProject}
+                            isSubtask={false}
+                        />
                     </TabPanel>
                 </DialogContent >
             )
@@ -275,9 +229,7 @@ const EditLaneForm = (props) => {
                         onCancel();
                         setModalOpen(false);
                     }}>Edit Lane</DialogTitle>
-                {
-                    checkIfAuthenticated(global, classes)
-                }
+                { checkIfAuthenticated(global, classes) }
             </Dialog>
         </React.Fragment>
     )

@@ -4,19 +4,15 @@ const storeDetailTask = (payload) => {
     const user = JSON.parse(localStorage.getItem('user'));
 
     const newProjects = user.projects.map((project) => {
-        if (project.id == payload.projectId) {
-            project.columns = project.columns.map(column => {
-                if (column.id == payload.listId) {
-                    column.cards = column.cards.map((card) => {
-                        if (card.id == payload.data.id) {
-                            card = payload.data;
-                        }
-                        return card
-                    });
+        project.columns = project.columns.map(column => {
+            column.cards = column.cards.map((card) => {
+                if (card.id == payload.data.id) {
+                    card = payload.data;
                 }
-                return column;
-            })
-        }
+                return card
+            });
+            return column;
+        });
         return project
     });
     user.projects = newProjects;
@@ -79,12 +75,17 @@ const removeTask = (payload) => {
     const auth = JSON.parse(localStorage.getItem('auth'));
     const user = JSON.parse(localStorage.getItem('user'));
 
+    console.log('removing-task',payload);
     const newProjects = user.projects.map((project) => {
         if (project.id == payload.projectId) {
+            console.log('removing-task, if(project)',project);
             project.columns = project.columns.map(column => {
                 if (column.id == payload.listId) {
+                    console.log('removing-task, if(column)',column);
                     column.cards = column.cards.filter(card => {
+                        console.log('removing-task : ',card.id,payload.id);
                         if (card.id != payload.id) {
+                            console.log('removing-task, if(card)',card);
                             return card
                         }
                     });

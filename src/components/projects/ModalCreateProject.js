@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext,useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import 'fontsource-roboto';
 import axios from 'axios';
@@ -13,11 +13,15 @@ import TextField from '@material-ui/core/TextField';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
+import Box from '@material-ui/core/Box';
 import UserContext from '../../context/UserContext';
-import { DateTimePicker } from "@material-ui/pickers";
+import MobileDateRangePicker from '@material-ui/lab/MobileDateRangePicker';
+import AdapterDateFns from '@material-ui/lab/AdapterDateFns';
+import LocalizationProvider from '@material-ui/lab/LocalizationProvider';
 import CloseIcon from '@material-ui/icons/Close';
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
+import UserSearchBar from './../widgets/UserSearchBar'
 
 const styles = (theme) => ({
     root: { margin: 0, padding: theme.spacing(2) },
@@ -57,15 +61,20 @@ export default function ModalCreateProject(props) {
     var closeModal = props.closeModal;
     const { enqueueSnackbar } = useSnackbar();
 
-    const [title, setTitle] = React.useState('');
-    const [description, setDescription] = React.useState('');
-    const [estimationDeadline, setEstimationDeadline] = React.useState(null);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [start, setStart] = useState(null);
+    const [end, setEnd] = useState(null);
+    const [dateRange, setDateRange] = useState([null,null]);
+    const [projectOwner, setProjectOwner] = useState([]);
+    const [projectManager, setProjectManager] = useState([]);
     const global = useContext(UserContext);
     const history = useHistory();
 
     useEffect(() => {
-        if (estimationDeadline === '') setEstimationDeadline(null);
-    }, [estimationDeadline]);
+        if (end === '') setEnd(null);
+        if (start === '') setStart(null);
+    }, [end,start]);
 
     const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
 
@@ -73,20 +82,26 @@ export default function ModalCreateProject(props) {
         const body = {
             title: title,
             description: description,
-            estimationDeadline: estimationDeadline,
+            start: start,
+            end: end,
+            project_owner:projectOwner,
+            project_manager:projectManager,
             users_id: global.state.id,
         }
-        const config = {
-            mode: 'no-cors', crossdomain: true,
-        }
+
         if (!window.navigator.onLine) {
             handleSnackbar(`You are currently offline`, 'warning');
         } else {
-            const url = process.env.REACT_APP_BACK_END_BASE_URL + 'user/' + global.state.id + '/project';
+            var url = '';
+            if(global.state.occupation=='System administrator' || global.state.occupation=='CEO'){
+                url=process.env.REACT_APP_BACK_END_BASE_URL + 'user/' + global.state.id + '/project';
+            }else{
+                url=process.env.REACT_APP_BACK_END_BASE_URL + 'project';
+            }
 
             axios.defaults.headers.common['Authorization'] = global.state.token;
             axios.defaults.headers.post['Content-Type'] = 'application/json';
-            axios.post(url, body, config)
+            axios.post(url, body,  { mode: 'no-cors', crossdomain: true})
                 .then((result) => {
                     if (result.status === 200) {
                         global.dispatch({ type: 'create-new-project', payload: result.data })
@@ -107,7 +122,10 @@ export default function ModalCreateProject(props) {
     const checkIfAuthenticated = () => {
         if (global.state.authenticated === true) {
             return (
-                <React.Fragment>
+                <form onSubmit={(e)=>{
+                    e.preventDefault();
+                    submitData()
+                }}>
                     <DialogContent dividers>
                         <Grid container spacing={2} style={{ paddingLeft: 3, paddingRight: 3 }} >
                             <Grid item lg={6} md={6} sm={6} xs={12} >
@@ -119,17 +137,41 @@ export default function ModalCreateProject(props) {
                                     style={{ width: '100%' }}
                                 />
                             </Grid>
-                            <Grid item lg={6} md={6} sm={6} xs={12} >
-                                <DateTimePicker
-                                    label="Estimation Deadline : "
-                                    format="YYYY-MM-DD HH:mm"
-                                    value={estimationDeadline ? moment(estimationDeadline).format('YYYY-MM-DD HH:mm') : null}
-                                    onChange={(value) => {
-                                        setEstimationDeadline(moment(value).format('YYYY-MM-DD HH:mm'))
-                                    }}
-                                    ampm={false}
-                                    renderInput={(props) => <TextField {...props}  variant="standard"/>}
-                                />
+                            <Grid item lg={12} md={12} sm={12} xs={12}>
+                                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                    <MobileDateRangePicker
+                                        required
+                                        startText="Start : "
+                                        endText="End : "
+                                        value={dateRange}
+                                        onChange={(newValue) => {
+                                            var start= newValue[0];
+                                            var end= newValue[1];
+                                            setDateRange(newValue)
+                                            if(start){
+                                                start=moment(newValue[0]).format('YYYY-MM-DD HH:mm:ss'); 
+                                                setStart(moment(start).format('YYYY-MM-DD HH:mm:ss'))
+                                            }
+                                            if(end){ 
+                                                end=moment(newValue[1]).format('YYYY-MM-DD HH:mm:ss');
+                                                setEnd(moment(end).format('YYYY-MM-DD HH:mm:ss'))
+                                            }
+                                        }}
+                                        renderInput={(startProps, endProps) => (
+                                        <>
+                                            <TextField {...startProps} variant="standard" required />
+                                            <Box sx={{ mx: 2 }}> to </Box>
+                                            <TextField {...endProps}  variant="standard"  required/>
+                                        </>
+                                        )}
+                                    />
+                                </LocalizationProvider> 
+                            </Grid>
+                            <Grid item lg={12} md={12} sm={12} xs={12}>
+                                <UserSearchBar inputLabel={"Project Owner"}onChange={(values)=>setProjectOwner(values.map((value)=>value.id))}/>
+                            </Grid>
+                            <Grid item lg={12} md={12} sm={12} xs={12}>
+                                <UserSearchBar inputLabel={"Project Manager"}onChange={(values)=>setProjectManager(values.map((value)=>value.id))}/>
                             </Grid>
                             <Grid item lg={12} md={12} sm={12} xs={12}>
                                 <TextField variant="standard"
@@ -147,7 +189,7 @@ export default function ModalCreateProject(props) {
                     <DialogActions>
                         <Button onClick={submitData} color="primary">Create</Button>
                     </DialogActions>
-                </React.Fragment>
+                </form>
             )
         } else {
             return (

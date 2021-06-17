@@ -94,7 +94,7 @@ export default function OccupationInformation() {
                 <OccupationTable data={data} onUpdate={handleOccupationUpdate} onDelete={handleOccupationDelete} modalOpen={handleModalOpen} />
                 <ModalCreateOccupation
                     open={modalCreateOpen}
-                    closeModal={() => setModalDetailOpen(false)}
+                    closeModal={() =>  setModalCreateOpen(false)}
                     onCreate={setData}
                 />
                 {showModalDetailOccupation()}

@@ -7,8 +7,8 @@ import UserContext from '../../context/UserContext';
 
 
 export default function UserSearchbar(props) {
-    const { projectId, taskId, checklistId, exceptedUsers } = props;
-    const handleValueChanges = props.onChange;
+    const { detailProject, exceptedUsers,onChange,inputLabel } = props;
+    const handleValueChanges = onChange;
     const [users, setUsers] = useState([]);
     const [options, setOptions] = useState([]);
     let global = useContext(UserContext);
@@ -21,6 +21,7 @@ export default function UserSearchbar(props) {
         axios.defaults.headers.post['Content-Type'] = 'application/json';
         axios.get(url, {}, config)
             .then((result) => {
+                console.log('getUsers : ',result.data);
                 setUsers(result.data);
             }).catch((error) => {
                 const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
@@ -29,23 +30,22 @@ export default function UserSearchbar(props) {
     }
 
     useEffect(() => {
-        getUsers();
+        if(detailProject) setUsers(detailProject.members);
+        else getUsers();
     }, []);
 
     function checkExistingMember(id, arr) {
         var exists = false;
-        for (let i = 0; i < arr.length; i++) {
-            const item = arr[i];
-            if('user' in item){
-                if (id == item.user.id) {
-                    exists = true;
-                    break;
+        try {  
+            for (let i = 0; i < arr.length; i++) {
+                const item = arr[i];
+                if('user' in item) {
+                    if (id == item.user.id){ exists = true;  break; }
                 }
+                if (id == item.id){ exists = true;  break;}
             }
-            if (id == item.id) {
-                exists = true;
-                break;
-            }
+        } catch (error) {
+            console.log('checkExistingMember => usersearchbar',error)
         }
         return exists;
     }
@@ -69,15 +69,20 @@ export default function UserSearchbar(props) {
             freeSolo
             options={options.sort((a, b) => -b.firstLetter.localeCompare(a.firstLetter))}
             groupBy={(option) => option.firstLetter}
-            getOptionLabel={(option) => `${option.name} - (${option.email})`}
-            style={{ width: '100%' }}
-            renderInput={(params) => <TextField {...params} label="Search Users" variant="standard"/>}
-            onChange={(event, options) => handleValueChanges(options)}
-            renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                    <Chip variant="outlined" label={option.name} {...getTagProps({ index })} />
-                ))
+            getOptionLabel={(option) => {
+                var label='';
+                if('role' in option &&  typeof option.role=='object') label= `${option.name} (${option.role.name})`;
+                if('occupation' in option && typeof option.occupation=='object') label= `${option.name} (${option.occupation.name})`; 
+                if(!('role' in option) && !('occupation' in option)) label= `${option.name} (${option.email})`;
+                return label;
+               }
             }
+            style={{ width: '100%' }}
+            renderInput={(params) => <TextField {...params} label={inputLabel?inputLabel:"Search Users"} variant="standard"/>}
+            onChange={(event, options) => handleValueChanges(options)}
+            renderTags={(values, getTagProps) => values.map((option, index) =>{
+                return(<Chip variant="outlined" label={option.name} {...getTagProps({ index })} /> )
+            })}
         />
     );
 }

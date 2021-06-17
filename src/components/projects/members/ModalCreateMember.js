@@ -60,7 +60,6 @@ export default function ModalCreateMember(props) {
                 const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
                 global.dispatch({ type: 'handle-fetch-error', payload: payload });
             });
-        console.log('getRoles')
     }
 
     useEffect(() => {
@@ -106,9 +105,14 @@ export default function ModalCreateMember(props) {
                             <Grid item lg={12} md={12} sm={12} xs={12} >
                                 <UserSearchBar 
                                     onChange={(value) => setNewMembers(value)} 
-                                    exceptedUsers={exceptedUsers.map(function(member){
-                                        return {...member.user,role:member.role}
-                                    })} />
+                                    exceptedUsers={[
+                                        ...exceptedUsers,
+                                        {
+                                            id:global.state.id,
+                                            name:global.state.name,
+                                            email:global.state.email
+                                        }
+                                    ]} />
                             </Grid>
                             <Grid item lg={12} md={12} sm={12} xs={12} >
                                 <SelectRole onChange={(value) => setSelectedRole(value)} data={roles} />

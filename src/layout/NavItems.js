@@ -38,7 +38,6 @@ export const MainListItems = () => (
 );
 
 export const SecondaryListItems = () => {
-    let global = useContext(UserContext);
     const showRestrictedAccess = () => {
         return (
             <React.Fragment>
@@ -47,7 +46,7 @@ export const SecondaryListItems = () => {
                     <ListItemIcon>
                         <PeopleIcon />
                     </ListItemIcon>
-                    <ListItemText> Users </ListItemText>
+                    <ListItemText> Employee </ListItemText>
                 </ListItem>
             </React.Fragment>
         )

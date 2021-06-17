@@ -57,7 +57,8 @@ export default function ModalDetailMember(props) {
     const history = useHistory();
     const [data, setData] = useState({
         id: null, 
-        user:{  name: '', email: '', phone_number: '',  last_login: '', occupation: null, profilePicture: ''  },
+        name: '', email: '', phone_number: '',  last_login: '', occupation: null, profilePicture: '' ,
+        project_member_id:null,
         role:{ id:null, name:'' },
         tasks:[]
     });
@@ -70,7 +71,7 @@ export default function ModalDetailMember(props) {
 
     useEffect(() => {
         setData(props.initialState);
-        getTasks(props.initialState.id)
+        getTasks(props.initialState.project_member_id)
     }, [props.initialState.id]);
 
     const getTasks = (id) => {

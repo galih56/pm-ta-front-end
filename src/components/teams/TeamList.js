@@ -1,33 +1,68 @@
-import React from 'react';
-import { Link } from "react-router-dom";
-import DetailTeam from './DetailTeam';
-import {
-    Grid, Paper,
-    Table, TableBody, TableCell, TableHead, TableRow,
-    Checkbox,
-    Typography
-} from '@material-ui/core/';
-
-const rows = [
-    { id: 0, name: 'Team 1', description: 'Lorem ipsum dolor set amet' },
-    { id: 1, name: 'Team 2', description: 'Lorem ipsum dolor set amet' },
-    { id: 2, name: 'Team 3', description: 'Lorem ipsum dolor set amet' },
-    { id: 3, name: 'Team 4', description: 'Lorem ipsum dolor set amet' },
-];
-
-function preventDefault(event) {
-    event.preventDefault();
-}
+import React,{useState,useEffect,useContext} from 'react';
+import { Link, useHistory } from "react-router-dom";
+import UserContext from '../../context/UserContext';
+import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Typography from '@material-ui/core/Typography';
+import axios from 'axios';
+import FormCreateTeam from './FormCreateTeam';
+import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 
 export default function TeamTable() {
-    const handleChange = () => { }
+    const [openFormCreate,setOpenFormCreate]=useState(false);
+    const [rows,setRows]=useState([])
+    const global = useContext(UserContext);
+    let history = useHistory();
+
+    const getTeams = () => {
+        const config = { mode: 'no-cors', crossdomain: true, }
+        const url = process.env.REACT_APP_BACK_END_BASE_URL + 'team';
+        axios.defaults.headers.common['Authorization'] = global.state.token;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.get(url, {}, config)
+            .then((result) => {
+                setRows(result.data);
+            }).catch((error) => {
+                const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
+                global.dispatch({ type: 'handle-fetch-error', payload: payload });
+            });
+    }
+
+    useEffect(()=>{
+        getTeams()
+    },[]);
 
     const onHoveredStyle = { cursor: 'pointer' };
     return (
-        <Grid container spacing={2}>
-            <Grid xs={12} sm={12} md={12} lg={12} lg={12} item>
-                <Paper style={{ padding: '1em' }}>
+        <Paper style={{ padding: '1em' }}>
+            <Grid container spacing={2}>
+                <Grid lg={12} md={12} sm={12} xs={12} item>
+                    <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="teams">
+                        <Button component={Link}  color="primary"
+                            to="/">
+                            Projects
+                        </Button>
+                        <Typography color="textPrimary">Teams</Typography>
+                    </Breadcrumbs>
+                </Grid>
+                <Grid  lg={12} md={12} sm={12} xs={12} item>
                     <Typography variant="h5">Teams</Typography>
+                    <Button onClick={()=>setOpenFormCreate(true)}>Create a new team</Button>
+                    <FormCreateTeam 
+                        open={openFormCreate}
+                        handleClose={()=>setOpenFormCreate(false)}
+                        onCreate={(newTeam)=>{
+                            setRows([...rows,newTeam])
+                        }}/>
+                </Grid>
+                <Grid  lg={12} md={12} sm={12} xs={12} item>
                     <Table size="small">
                         <TableHead>
                             <TableRow>
@@ -39,7 +74,7 @@ export default function TeamTable() {
                                 <TableRow key={row.id} style={onHoveredStyle}>
                                     <TableCell>
                                         <Typography variant="body2" display="block">
-                                            <Link to={`team/` + row.id} style={{ textDecoration: 'none', color: 'black' }}>
+                                            <Link to={`/teams/` + row.id} style={{ textDecoration: 'none', color: 'black' }}>
                                                 <strong>{row.name}</strong><br />
                                                 {row.description}
                                             </Link>
@@ -49,9 +84,9 @@ export default function TeamTable() {
                             ))}
                         </TableBody>
                     </Table>
-                </Paper>
-            </Grid>
-        </Grid >
+                </Grid>
+            </Grid >
+        </Paper>
     );
 }
 

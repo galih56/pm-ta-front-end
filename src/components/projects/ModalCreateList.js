@@ -1,6 +1,12 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
-import { Grid, Button, Dialog, IconButton, Typography, TextField, } from '@material-ui/core/';
+import Grid from '@material-ui/core/Grid';
+import Box from '@material-ui/core/Box';
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import IconButton from '@material-ui/core/IconButton';
+import Typography from '@material-ui/core/Typography';
+import TextField from '@material-ui/core/TextField';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
@@ -11,6 +17,10 @@ import 'fontsource-roboto';
 import axios from 'axios';
 import Alert from '@material-ui/lab/Alert';
 import { useSnackbar } from 'notistack';
+import MobileDateRangePicker from '@material-ui/lab/MobileDateRangePicker';
+import AdapterDateFns from '@material-ui/lab/AdapterDateFns';
+import LocalizationProvider from '@material-ui/lab/LocalizationProvider';
+import moment from 'moment'
 
 const styles = (theme) => ({
     root: { margin: 0, padding: theme.spacing(2) },
@@ -51,22 +61,26 @@ export default function ModalCreateList(props) {
     var projectId = props.projectId;
     var closeModal = props.handleClose;
     const history = useHistory();
-    // const handleStoreList = props.handleStoreList; nanti dipakai waktu offline mode udah bisa
     const refreshData = props.refreshDetailProject;
     const [title, setTitle] = useState('');
+    const [start, setStart] = useState(null);
+    const [end, setEnd] = useState(null);
+    const [dateRange, setDateRange] = useState([null, null]);
     const { enqueueSnackbar } = useSnackbar();
     const global = useContext(UserContext);
 
-    const handleSnackbar = (message, variant) =>  enqueueSnackbar(message, { variant });
+    const snackbar = (message, variant) =>  enqueueSnackbar(message, { variant });
 
     const submitData = () => {
         const body = {
             title: title,
+            start: start,
+            end: end,
             projects_id: projectId,
             cards: []
         }
         if (!window.navigator.onLine) {
-            handleSnackbar(`You are currently offline`, 'warning');
+            snackbar(`You are currently offline`, 'warning');
         }
         const config = { mode: 'no-cors', crossdomain: true }
         const url = process.env.REACT_APP_BACK_END_BASE_URL + 'list/';
@@ -79,9 +93,9 @@ export default function ModalCreateList(props) {
                 closeModal();
                 refreshData();
                 global.dispatch({ type: 'create-new-list', payload: result.data });
-                handleSnackbar(`A new list successfully created`, 'success');
+                snackbar(`A new list successfully created`, 'success');
             }).catch((error) => {
-                const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
+                const payload = { error: error, snackbar: snackbar, dispatch: global.dispatch, history: history }
                 global.dispatch({ type: 'handle-fetch-error', payload: payload });
             });
     }
@@ -100,6 +114,36 @@ export default function ModalCreateList(props) {
                                     onChange={(e) => setTitle(e.target.value)}
                                     style={{ width: '100%' }}
                                 />
+                            </Grid>
+                            <Grid item lg={12} md={12} sm={12} xs={12} container>
+                                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                    <MobileDateRangePicker
+                                        required
+                                        startText="Planned to start at : "
+                                        endText="Planned to finish at : "
+                                        value={dateRange}
+                                        onChange={(newValue) => {
+                                            var start= newValue[0];
+                                            var end= newValue[1];
+                                            setDateRange(newValue)
+                                            if(start){
+                                                start=moment(newValue[0]).format('YYYY-MM-DD HH:mm:ss'); 
+                                                setStart(start)
+                                            }
+                                            if(end){ 
+                                                end=moment(newValue[1]).format('YYYY-MM-DD HH:mm:ss');
+                                                setEnd(end)
+                                            }
+                                        }}
+                                        renderInput={(startProps, endProps) => (
+                                        <>
+                                            <TextField {...startProps} variant="standard" required />
+                                            <Box sx={{ mx: 2 }}> to </Box>
+                                            <TextField {...endProps}  variant="standard"  required/>
+                                        </>
+                                        )}
+                                    />
+                                </LocalizationProvider>  
                             </Grid>
                         </Grid>
                     </DialogContent>

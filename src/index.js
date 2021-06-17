@@ -6,7 +6,7 @@ import Layout from "./layout/Layout";
 import UserContext, {
     initState, resetState, getAuthDataFromStorage,
     storeAuthData, runDelayedHTTPRequest, 
-    storeGoogleAuth, storeGithubAuth
+    storeGoogleAuth, storeGithubAuth, removeGithubAuth
 } from './context/UserContext';
 import { createNewList, removeList, updateList } from './context/ListsReducer';
 import { storeMeetings,createNewMeeting, storeDetailMeeting, removeMeeting, updateMeeting } from './context/MeetingsReducer';
@@ -43,14 +43,13 @@ const checkAuthentication = (payload, state) => {
 
 const handleFetchError = (payload, state) => {
     const { error, snackbar, dispatch, history } = payload;
-    console.log(error);
     try {
         if (error.response) {
             // Request made and server responded
             switch (error.response.status) {
                 case 401:
                     if (snackbar) snackbar(`Please login before updating any data`, 'warning');
-                    dispatch({ type: 'logout' });
+                        dispatch({ type: 'logout' });
                     if (history) history.push('/auth');
                     break;
                 case 409:
@@ -76,7 +75,6 @@ const handleFetchError = (payload, state) => {
 
 const reducer = (state, action) => {
     const payload = action.payload;
-
     switch (action.type) {
         case 'authenticate':
             return storeAuthData(payload);
@@ -86,6 +84,8 @@ const reducer = (state, action) => {
             return storeGoogleAuth(payload, state);
         case 'store-github-auth':
             return storeGithubAuth(payload, state);
+        case 'remove-github-auth':
+            return removeGithubAuth(payload, state);
         case 'store-projects':
             return storeProjects(state, payload);
         case 'store-detail-project':
@@ -100,6 +100,8 @@ const reducer = (state, action) => {
             return updateList(payload); 
         case 'remove-list':
             return (payload);
+        case 'create-new-task':
+            return createNewTask(payload);
         case 'store-detail-task':
             return storeDetailTask(payload);
         case 'remove-task':
@@ -131,7 +133,7 @@ const reducer = (state, action) => {
         case 'check-authentication':
             return checkAuthentication(payload, state);
         default:
-            throw new Error();
+            console.log('Default switch : ',action,state);
     }
 }
 
@@ -187,7 +189,7 @@ const App = () => {
                                         return (
                                             <>
                                                 <Route path={`${path}/:id`} component={DetailTeam} />
-                                                <Route path={`${path}`} component={TeamList} />
+                                                <Route path={`${path}`} exact component={TeamList} />
                                             </>
                                         )
                                     }} />

@@ -14,7 +14,7 @@ import moment from 'moment';
 const Kanban = (props) => {
     const global = useContext(UserContext);
     const [board, setBoard] = useState({ lanes: [] });
-    const {projectId,detailProject,handleDetailTaskOpen,refreshDetailProject} = props;
+    const {detailProject,refreshDetailProject,handleDetailTaskOpen} = props;
     const { enqueueSnackbar } = useSnackbar();
     const handleSnackbar = useCallback((message, variant) => enqueueSnackbar(message, { variant }));
     const history = useHistory();
@@ -35,26 +35,24 @@ const Kanban = (props) => {
         newCard.id = Date.now();
         newCard.listId = laneId;
         newCard.userId = global.state.id;
-        newCard.projectId = projectId;
+        newCard.projectId = detailProject.id;
         newCard.creator=global.state.id;
         
         for (let i = 0; i < detailProject.members.length; i++) {
             const member = detailProject.members[i];
             if(member.id==global.state.id) newCard.projectMemberId=member.id; break;
         }
-        newCard.start= moment(newCard.start).format('YYYY-MM-DD HH:mm:ss');
-        newCard.end = moment(newCard.end).format('YYYY-MM-DD HH:mm:ss');
-        
+
         if (window.navigator.onLine) {
             const config = { mode: 'no-cors', crossdomain: true }
             const url = process.env.REACT_APP_BACK_END_BASE_URL + 'task/';
-        
+            
             axios.defaults.headers.common['Authorization'] = global.state.token;
             axios.defaults.headers.post['Content-Type'] = 'application/json';
             axios.post(url, newCard, config)
                 .then((result) => {
-                    newCard = result.data;
-                    newCard.projectId = projectId;
+                    newCard.id = result.data.id;
+                    newCard.projectId = detailProject.id;
                     newCard.listId = laneId;
                     global.dispatch({ type: 'create-new-task', payload: newCard })
                     handleSnackbar(`A new card successfuly created`, 'success');
@@ -64,13 +62,14 @@ const Kanban = (props) => {
                     global.dispatch({ type: 'handle-fetch-error', payload: payload });
                 });
         } else {
+            handleSnackbar(`You're currently offline. Please check your internet connection`, 'warning');
             global.dispatch({ type: 'create-new-task', payload: newCard });
         }
         return newCard;
     }
 
     const onLaneRename = (laneId, data) => {
-        data.projectId = projectId;
+        data.projectId = detailProject.id;
         data.listId = laneId;
         if (window.navigator.onLine) {
             const config = { mode: 'no-cors', crossdomain: true }
@@ -94,9 +93,6 @@ const Kanban = (props) => {
             handleSnackbar(`You're currently offline. Please check your internet connection`, 'warning');
         }
     }
-
-    const onCardClick = (cardId, metadata, laneId) => handleDetailTaskOpen({ projectId: projectId, listId: laneId, taskId: cardId, open: true });
-
     const onCardMove = (fromLaneId, toLaneId, cardId, index) => {
         const body = {
             id: cardId,
@@ -127,31 +123,35 @@ const Kanban = (props) => {
             handleSnackbar(`You're currently offline. Please check your internet connection`, 'warning');
         }
     }
-
-    const handleLaneDragStart = (laneId) => {
-        console.log(laneId);
+    const onCardClick = (cardId, metadata,laneId) =>{ 
+        handleDetailTaskOpen({ projectId: detailProject.id, listId: laneId, taskId: cardId, open: true,onCardDelete:onCardDelete});
     }
-
-    const handleLaneDragEnd = (removedIndex, addedIndex, payload) => {
-        console.log(removedIndex, addedIndex, payload);
+    const EditLaneFormWithDetailProject=(props)=>{
+        return (<EditLaneForm detailProject={{id:detailProject.id,members:detailProject.members}} {...props}/>)
     }
+   
+    const [eventBus, setEventBus] = useState(undefined);
 
+    const onCardDelete=(listId,taskId)=>{
+        console.log(listId,taskId)
+        eventBus.publish({type: 'REMOVE_CARD', laneId: listId, cardId: taskId});
+    }
     return (
         <React.Fragment>
             <Board
                 t={createTranslate(TEXTS)}
                 data={board}
                 editable={true}
-                draggable={true}
-                laneDraggable={true}
+                // draggable={true}
+                // laneDraggable={true}
                 collapsibleLanes={true}
                 onLaneUpdate={onLaneRename}
                 onCardAdd={onCardNew}
                 onCardClick={onCardClick}
-                components={{ Card: CustomCard, NewCardForm: EditLaneForm }}
+                components={{ Card: CustomCard, NewCardForm: EditLaneFormWithDetailProject }}
                 onCardMoveAcrossLanes={onCardMove}
-                handleLaneDragStart={handleLaneDragStart}
-                handleLaneDragEnd={handleLaneDragEnd}
+                detailProject={detailProject}
+                eventBusHandle={setEventBus}
             >
             </Board>
         </React.Fragment>

@@ -37,7 +37,7 @@ const EventTimeline = (props) => {
             detailProject.columns.forEach(column => {
                 if ('cards' in column) {
                     column.cards.forEach(card => {
-                        events.push(card);
+                        if(card.start && card.end) events.push(card);
                     });
                 }
             });
@@ -50,12 +50,9 @@ const EventTimeline = (props) => {
     }, [detailProject]);
 
     const getDeadline = (start, end) => {
-        const start_datetime = moment(start).format('YYYY-MM-DD HH:mm');
-        const end_datetime = moment(end).format('YYYY-MM-DD HH:mm');
-        const start_split = start.split(' ');
-        const end_split = end.split(' ');
-        if (start_split[0] == end_split[0]) return `${start_split[0]}  ${start_split[1]}-${end_split[1]} `;
-        else return `${start_datetime} - ${end_datetime}`
+        const start_datetime = moment(start).format('Do MMMM YYYY');
+        const end_datetime = moment(end).format('Do MMMM YYYY');
+        return `${start_datetime} - ${end_datetime}`
     }
     return (
         <Timeline align="alternate">
@@ -81,8 +78,8 @@ const EventTimeline = (props) => {
                                 <TimelineContent>
                                     <Paper elevation={3} className={classes.paper}>
                                         <Grid>
-                                            <Link to={{ pathname: pathname, search: searchParams.toString() }} style={{textDecoration:'none'}}> 
-                                                <Typography variant="h6" component="h1">{event.title}</Typography>
+                                            <Link to={{ pathname: pathname, search: searchParams.toString() }} style={{textDecoration:'none',color:''}}> 
+                                                <Typography variant="body1">{event.title}</Typography>
                                             </Link>
                                         </Grid>
                                         <Grid>

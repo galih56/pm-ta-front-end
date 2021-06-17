@@ -46,43 +46,39 @@ const DialogActions = withStyles((theme) => ({
     root: { margin: 0, padding: theme.spacing(1), },
 }))(MuiDialogActions);
 
-export default function ModalDetailTask(props) {
-    const projectId = props.projectId
-    const { listId, taskId } = props.initialState;
+const removeTaskIdQueryString=(history)=>{
+    const queryParams = new URLSearchParams(history.location.search)
+    if (queryParams.has('task_id')) {
+        queryParams.delete('task_id');
+        history.replace({
+            search: queryParams.toString(),
+        })
+    }
+}
 
+export default function ModalDetailTask(props) {
+    const { taskId } = props.initialState;
     const open = props.open;
     const closeModalDetailTask = props.closeModalDetailTask;
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const global = useContext(UserContext);
     const { enqueueSnackbar } = useSnackbar();
     const history = useHistory();
-
     const [data, setData] = useState({
-        id: taskId, projectId: projectId, listId: listId,
+        id: taskId, projectId: '', listId: null, list:null,
         title: '', description: '', label: '', complete: false, progress: 0,
-        createdAt: '', updatedAt: '', list: null, tags: [], taskMembers: [],
-        checklists: [], logs: [], comments: [], attachments: []
+        start:null,end:null,actualStart:null,actualEnd:null, startLabel:'',endLabel:'',
+        createdAt: '', updatedAt: '', list: null, tags: [], members: [],
+        cards: [], logs: [], comments: [], attachments: [],creator:null,isSubtask:false
     });
+    const [detailProject,setDetailProject]=useState({
+        id:'',title:'',members:[],columns:[]
+    })
     const [isEditing, setIsEditing] = useState(false);
     const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
     const handleEditingMode = (bool = false) => setIsEditing(bool);
 
     const getDetailTask = useCallback(() => {
-        const projects = global.state.projects;
-        for (let i = 0; i < projects.length; i++) {
-            if (projects[i].id == data.projectId) {
-                for (let j = 0; j < projects[i].columns.length; j++) {
-                    const column = projects[i].columns[j];
-                    for (let k = 0; k < column.cards.length; k++) {
-                        const card = column.cards[k];
-                        if (card.id == data.taskId) {
-                            setData({ ...data, ...card });
-                            break
-                        }
-                    }
-                }
-            }
-        }
         if (window.navigator.onLine) {
             const config = { mode: 'no-cors', crossdomain: true, }
             const url = process.env.REACT_APP_BACK_END_BASE_URL + 'task/' + taskId;
@@ -98,11 +94,32 @@ export default function ModalDetailTask(props) {
                     global.dispatch({ type: 'handle-fetch-error', payload: payload });
                 });
         } else handleSnackbar(`You are currently offline. Couldn't retrieve related data from local storage`, 'warning');
-    }, [projectId, listId, taskId]);
+    }, [taskId]);
 
     useEffect(() => {
         setTimeout(() => getDetailTask(), 100);
     }, [])
+
+    useEffect(()=>{
+        const getDetailProject = () => {
+            const config = { mode: 'no-cors', crossdomain: true }
+            const url = process.env.REACT_APP_BACK_END_BASE_URL + 'project/' + data.list.project;
+            axios.defaults.headers.post['Content-Type'] = 'application/json';
+            axios.get(url, {}, config)
+                .then((result) => {
+                    setDetailProject({id:data.list.project})
+                }).catch((error) => {
+                    const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: null }
+                    global.dispatch({ type: 'handle-fetch-error', payload: payload });
+                });
+        }
+        if(props.detailProject)setDetailProject(props.detailProject)
+        else {
+            if(data.list){
+                getDetailProject()
+            }
+        }
+    },[props.detailproject])
 
     useEffect(() => {
         if (data.complete == true) setData({ ...data, progress: 100 });
@@ -110,49 +127,42 @@ export default function ModalDetailTask(props) {
 
     const saveChanges = () => {
         let body = data;
-        if (window.navigator.onLine) {
-            const config = { mode: 'no-cors', crossdomain: true }
-            const url = process.env.REACT_APP_BACK_END_BASE_URL + `task/${data.id}`;
-            try {
-                axios.defaults.headers.common['Authorization'] = global.state.token;
-                axios.defaults.headers.post['Content-Type'] = 'application/json';
-                axios.patch(url, body, config)
-                    .then((result) => {
-                        const payload = { projectId: projectId, listId: data.listId, data: data };
-                        global.dispatch({ type: 'store-detail-task', payload: payload });
-                        handleSnackbar(`Data has been updated`, 'success');
-                    }).catch((error) => {
-                        const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
-                        global.dispatch({ type: 'handle-fetch-error', payload: payload });
-                    });
-            } catch (error) {
-                handleSnackbar('Failed to send request', 'error');
-            }
-        } else {
-
-        }
-    }
-
-    const handleCompleteTask = (event) => {
-        const body = { id: taskId, complete: event.target.checked };
-        if (window.navigator.onLine) {
-            const config = { mode: 'no-cors', crossdomain: true }
-            const url = process.env.REACT_APP_BACK_END_BASE_URL + `task/${data.id}`;
+        const config = { mode: 'no-cors', crossdomain: true }
+        const url = process.env.REACT_APP_BACK_END_BASE_URL + `task/${data.id}`;
+        try {
             axios.defaults.headers.common['Authorization'] = global.state.token;
             axios.defaults.headers.post['Content-Type'] = 'application/json';
             axios.patch(url, body, config)
                 .then((result) => {
-                    const payload = { projectId: projectId, listId: listId, data: data };
-                    setData({...data,complete:result.data.complete})
+                    const payload = { data: data };
+                    setData(result.data)
                     global.dispatch({ type: 'store-detail-task', payload: payload });
                     handleSnackbar(`Data has been updated`, 'success');
                 }).catch((error) => {
                     const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
                     global.dispatch({ type: 'handle-fetch-error', payload: payload });
                 });
-        } else {
-
+        } catch (error) {
+            handleSnackbar('Failed to send request', 'error');
         }
+    }
+
+    const handleCompleteTask = (event) => {
+        const body = { id: taskId, complete: event.target.checked };
+        const config = { mode: 'no-cors', crossdomain: true }
+        const url = process.env.REACT_APP_BACK_END_BASE_URL + `task/${data.id}`;
+        axios.defaults.headers.common['Authorization'] = global.state.token;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.patch(url, body, config)
+            .then((result) => {
+                const payload = { data: data };
+                setData({...data,complete:result.data.complete})
+                global.dispatch({ type: 'store-detail-task', payload: payload });
+                handleSnackbar(`Data has been updated`, 'success');
+            }).catch((error) => {
+                const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
+                global.dispatch({ type: 'handle-fetch-error', payload: payload });
+            });
     }
 
     const deleteTask = () => {
@@ -166,6 +176,8 @@ export default function ModalDetailTask(props) {
                     .then((result) => {
                         global.dispatch({ type: 'remove-task', payload: data });
                         handleSnackbar(`Data has been deleted`, 'success');
+                        removeTaskIdQueryString(history)
+                        if(props.onDelete)props.onDelete(data.list,taskId)
                     }).catch((error) => {
                         const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: history }
                         global.dispatch({ type: 'handle-fetch-error', payload: payload });
@@ -177,18 +189,12 @@ export default function ModalDetailTask(props) {
             global.dispatch({ type: 'remove-task', payload: data });
         }
     }
- 
+    
     return (
         <Dialog  aria-labelledby="Modal Task Detail" open={open} style={{ zIndex: '750' }}
             maxWidth={'lg'} fullwidth={"true"}>
             <DialogTitle onClose={() => {
-                const queryParams = new URLSearchParams(history.location.search)
-                if (queryParams.has('task_id')) {
-                    queryParams.delete('task_id');
-                    history.replace({
-                        search: queryParams.toString(),
-                    })
-                }
+                removeTaskIdQueryString(history)
                 closeModalDetailTask();
             }}>
                 {data.title} {data.label ? `(${data.label})` : ''}
@@ -205,8 +211,9 @@ export default function ModalDetailTask(props) {
                 <EditForm
                     isEdit={isEditing}
                     data={data}
-                    setData={setData}>
-                </EditForm>
+                    setData={setData}
+                    detailProject={detailProject}
+                />
                 <br/>
             </DialogContent>
             <DialogActions>
@@ -223,3 +230,4 @@ export default function ModalDetailTask(props) {
         </Dialog>
     );
 }
+

@@ -60,7 +60,8 @@ const SelectTag = (props) => {
                 options={data}
                 getOptionLabel={option => {
                     if (typeof option === 'string') return option;
-                    if (option.inputValue) return option.inputValue;                 return option.title;
+                    if (option.inputValue) return option.inputValue;
+                    return option.title;
                 }}
                 renderTags={(value, getTagProps) =>{
                     return value.map((option, index) => (

@@ -96,6 +96,7 @@ export default function EnhancedTable(props) {
     const classes = useStyles();
     const handleDetailTaskOpen = props.handleDetailTaskOpen;
     const projectId = props.projectId;
+    const data = props.data;
     let initStateUser = { id: null, name: '', email: '', role: { id: null, name: '' } }
     const [clickedUser, setClickedUser] = useState(initStateUser);
     const [modalOpen, setModalOpen] = useState(false);
@@ -138,8 +139,8 @@ export default function EnhancedTable(props) {
     }
 
     useEffect(() => {
-        setRows(props.data);
-    }, [props.data]);
+        setRows(data);
+    }, [data]);
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -175,7 +176,7 @@ export default function EnhancedTable(props) {
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                             .map((row, index) => {
                                 return (
-                                    <Row key={row.id} data={row} handleDetailTaskOpen={handleDetailTaskOpen} handleModalOpen={handleModalOpen} />
+                                    <Row key={row.id} data={row} handleDetailTaskOpen={handleDetailTaskOpen} handleModalOpen={handleModalOpen} projectId={projectId}/>
                                 );
                             })}
                         {emptyRows > 0 && (
@@ -201,7 +202,6 @@ export default function EnhancedTable(props) {
                 handleClose={() => setNewMemberOpen(false)} 
                 exceptedUsers={rows} 
                 onCreate={(newMembers)=>{
-                    console.log('onCreate',newMembers);
                     setRows([...rows,...newMembers])
                 }}
             />
@@ -214,6 +214,7 @@ function Row(props) {
     const { data, handleDetailTaskOpen, handleModalOpen } = props;
     const [open, setOpen] = useState(false);
     const [tasks, setTasks] = useState([]);
+    const projectId=props.projectId;
     let global = useContext(UserContext);
 
     const getTasks = (id) => {
@@ -238,7 +239,7 @@ function Row(props) {
                 <TableCell>
                     <IconButton aria-label="expand row" size="small"
                         onClick={() => {
-                            getTasks(data.id);
+                            getTasks(data.project_member_id);
                             setOpen(!open);
                         }}
                     > {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />} </IconButton>
@@ -246,10 +247,10 @@ function Row(props) {
                 <TableCell component="th" scope="row" style={{ cursor: 'pointer' }}
                     onClick={() => {
                         handleModalOpen(data, true);
-                    }}> {data.user.name} <br />({data.user.email}) </TableCell>
-                <TableCell>{data.role.name}</TableCell>
+                    }}> {data.name} <br />({data.email}) </TableCell>
+                <TableCell>{data.role?data.role.name:'-'}</TableCell>
                 <TableCell align="right">
-                    {data.user.last_login ? moment(data.user.last_login).format('DD MMM YYYY') : ''}
+                    {data.last_login ? moment(data.last_login).format('DD MMM YYYY') : ''}
                 </TableCell>
             </TableRow>
             <TableRow>
@@ -257,7 +258,7 @@ function Row(props) {
                     <Collapse in={open} timeout="auto">
                     <Grid container>
                         <Grid xs={12} sm={12} md={12} lg={12} lg={12} item style={{ padding: '1em' }}>
-                            <TaskList data={tasks} handleDetailTaskOpen={handleDetailTaskOpen} />
+                            <TaskList projectId={projectId} data={tasks} handleDetailTaskOpen={handleDetailTaskOpen} />
                         </Grid>
                     </Grid>
                     </Collapse>

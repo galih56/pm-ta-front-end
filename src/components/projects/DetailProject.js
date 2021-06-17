@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useContext, lazy, Suspense, useCallback } from 'react';
 import { Link, useHistory, Switch, Route, BrowserRouter as Router, useLocation, withRouter } from "react-router-dom";
-import { Paper, Tabs, Tab, Grid, Button, Box } from '@material-ui/core/';
+import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
+import Box from '@material-ui/core/Box';
+import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import ModalDetailTask from '../tasks/modalDetailTask/ModalDetailTask';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { makeStyles } from '@material-ui/core/styles';
@@ -16,11 +24,8 @@ const Board = lazy(() => import('../widgets/board/Kanban'));
 const GanttChart = lazy(() => import('../widgets/GanttChart'));
 const Calendar = lazy(() => import('../widgets/Calendar'));
 const Files = lazy(() => import('../widgets/Files'));
+const Others = lazy(() => import('./Others'));
 const EventTimeline = lazy(() => import('../widgets/EventTimeline'));
-const ProjectInformations = lazy(() => import('../projects/ProjectInformations'));
-const MemberList = lazy(() => import('./members/MemberList'));
-const RoleList = lazy(() => import('./roles/RoleList'));
-const Repositories = lazy(() => import('./github/Repositories'));
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -58,10 +63,10 @@ const getCurrentTabIndex = (location, history, projectId) => {
     var currentTab = currentUrl[currentUrl.length - 1];
 
     switch (currentTab) {
-        case `board`:
+        case `gantt`:
             tabIndex = 0;
             break;
-        case `gantt`:
+        case `board`:
             tabIndex = 1;
             break;
         case `timeline`:
@@ -77,14 +82,17 @@ const getCurrentTabIndex = (location, history, projectId) => {
             tabIndex = 5;
             break;
         default:
-            history.push(`/projects/${projectId}/board`);
+            history.push(`/projects/${projectId}/gantt`);
             tabIndex = 0;
             break;
     }
     return tabIndex;
 }
 
-const clickedTaskInitialState={ projectId: null, listId: null, taskId: null };
+const clickedTaskInitialState={ 
+    id:null, taskId: null,
+    onCardDelete:()=>console.log('no-event')}
+;
 const clickedMeetingInitialState={
     id: null, name: null, type: null, size: null, source: null,
     icon: null, path: null, createdAt: null, updatedAt: null, user:null,
@@ -116,21 +124,20 @@ const DetailProject = (props) => {
     }
 
     const getDetailProject = () => {
-        if (window.navigator.onLine) {
-            const config = { mode: 'no-cors', crossdomain: true }
-            const url = process.env.REACT_APP_BACK_END_BASE_URL + 'project/' + params.id;
-            axios.defaults.headers.common['Authorization'] = global.state.token;
-            axios.defaults.headers.post['Content-Type'] = 'application/json';
-            axios.get(url, {}, config)
-                .then((result) => {
-                    const data = result.data;
-                    global.dispatch({ type: 'store-detail-project', payload: data })
-                    setDetailData(data);
-                }).catch((error) => {
-                    const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: null }
-                    global.dispatch({ type: 'handle-fetch-error', payload: payload });
-                });
-        } else {
+        const config = { mode: 'no-cors', crossdomain: true }
+        const url = process.env.REACT_APP_BACK_END_BASE_URL + 'project/' + params.id;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.get(url, {}, config)
+            .then((result) => {
+                const data = result.data;
+                global.dispatch({ type: 'store-detail-project', payload: data })
+                setDetailData(data);
+            }).catch((error) => {
+                const payload = { error: error, snackbar: handleSnackbar, dispatch: global.dispatch, history: null }
+                global.dispatch({ type: 'handle-fetch-error', payload: payload });
+            });
+            
+        if (!window.navigator.onLine) {
             handleSnackbar(`You're currently offline. Please check your internet connection.`, 'warning');
             setDetailData(getDataFromGlobalState(global.state, params.id));
         }
@@ -153,9 +160,9 @@ const DetailProject = (props) => {
     const handleChange = (event, newValue) => setTabState(newValue);
 
     const handleDetailTaskOpen = (taskInfo) => {
-        const { listId, taskId, open } = taskInfo;
+        const {taskId, open,onCardDelete } = taskInfo;
         setDetailTaskOpen(open);
-        setClickedTask({ projectId: params.id, listId: listId, taskId: taskId });
+        setClickedTask({ taskId: taskId,onCardDelete:onCardDelete });
     };
 
     const handleDetailMeetingOpen = (meetingInfo) => {
@@ -164,7 +171,7 @@ const DetailProject = (props) => {
     };
 
     const showModalDetailTask = useCallback(() => {
-        if (clickedTask.taskId != null && clickedTask.taskId !== undefined && detailTaskOpen == true) {
+        if ((clickedTask.id || clickedTask.taskId) && detailTaskOpen == true) {
             return (
                 <ModalDetailTask
                     open={detailTaskOpen}
@@ -172,8 +179,14 @@ const DetailProject = (props) => {
                         handleDetailTaskOpen(clickedTaskInitialState)
                     }}
                     refreshDetailProject={getDetailProject}
-                    projectId={params.id}
-                    initialState={clickedTask} />
+                    projectId={detailProject.id}
+                    detailProject={{
+                        id:detailProject.id,
+                        members:detailProject.members,
+                    }}
+                    initialState={clickedTask} 
+                    onDelete={clickedTask.onCardDelete}
+                    />
             )
         }
     }, [clickedTask]);
@@ -189,7 +202,8 @@ const DetailProject = (props) => {
                     })}
                     refreshDetailProject={getDetailProject}
                     detailProject={detailProject}
-                    initialState={clickedMeeting} />
+                    initialState={clickedMeeting} 
+                    />
             )
         }
     }, [clickedMeeting]);
@@ -201,8 +215,8 @@ const DetailProject = (props) => {
                     <Tabs
                         value={tabState}
                         onChange={handleChange} >
-                        <Tab component={Link} label="Board" to={`board`} />
                         <Tab component={Link} label="Gantt" to={`gantt`} />
+                        <Tab component={Link} label="Board" to={`board`} />
                         <Tab component={Link} label="Timeline" to={`timeline`} />
                         <Tab component={Link} label="Meeting" to={`meeting`} />
                         <Tab component={Link} label="Files" to={`files`} />
@@ -212,16 +226,42 @@ const DetailProject = (props) => {
                 <Suspense fallback={<LinearProgress />}>
                     <Switch>
                         <Route
-                            path={`/projects/:id/board`}
+                            path={`/projects/:id/gantt`}
                             render={() => {
                                 return (
                                     <TabPanel
                                         value={tabState}
                                         index={0}
+                                        className={classes.tabPanel}>
+                                        <Grid container >   
+                                            <CustomBreadCrumbs projectName={detailProject.title} tabName="Gantt"/>
+                                            <Grid item xl={12} md={12} sm={12} xs={12} style={{marginTop:'1em'}}>
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={()=>handleModalCreateList(true)}
+                                                    style={{ marginBottom: '1em' }}
+                                                    startIcon={<AddIcon />}> Add new list </Button>
+                                            </Grid>
+                                            <Grid item xl={12} md={12} sm={12} xs={12} >
+                                                <GanttChart detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
+                                            </Grid>
+                                        </Grid>
+                                    </TabPanel>
+                                )
+                            }} />
+                        <Route
+                            path={`/projects/:id/board`}
+                            render={() => {
+                                return (
+                                    <TabPanel
+                                        value={tabState}
+                                        index={1}
                                         style={{ padding: '0.5em' }}
                                     >
                                         <Grid container>
-                                            <Grid item xl={12} md={12} sm={12} xs={12} >
+                                            <CustomBreadCrumbs projectName={detailProject.title} tabName="Board"/>
+                                            <Grid item xl={12} md={12} sm={12} xs={12} style={{marginTop:'1em'}}>
                                                 <Button
                                                     variant="contained"
                                                     color="primary"
@@ -229,28 +269,6 @@ const DetailProject = (props) => {
                                                     style={{ marginBottom: '1em' }}
                                                     startIcon={<AddIcon />}> Add new list </Button>
                                                 <Board detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} refreshDetailProject={getDetailProject}/>
-                                            </Grid>
-                                        </Grid>
-                                    </TabPanel>
-                                )
-                            }} />
-                        <Route
-                            path={`/projects/:id/gantt`}
-                            render={() => {
-                                return (
-                                    <TabPanel
-                                        value={tabState}
-                                        index={1}
-                                        className={classes.tabPanel}>
-                                        <Grid container >   
-                                            <Grid item xl={12} md={12} sm={12} xs={12} >
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={()=>handleModalCreateList(true)}
-                                                style={{ marginBottom: '1em' }}
-                                                startIcon={<AddIcon />}> Add new list </Button>
-                                            <GanttChart detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
                                             </Grid>
                                         </Grid>
                                     </TabPanel>
@@ -265,6 +283,7 @@ const DetailProject = (props) => {
                                         index={2}
                                         style={{ padding: '0.5em' }}>
                                         <Grid container >   
+                                            <CustomBreadCrumbs projectName={detailProject.title} tabName="Timeline" style={{marginTop:'1em'}}/>
                                             <Grid item xl={12} md={12} sm={12} xs={12} >
                                                 <EventTimeline detailProject={detailProject} handleDetailTaskOpen={handleDetailTaskOpen} />
                                             </Grid>
@@ -282,6 +301,7 @@ const DetailProject = (props) => {
                                         index={3}
                                         style={{ padding: '0.5em' }}>
                                         <Grid container >   
+                                            <CustomBreadCrumbs projectName={detailProject.title} tabName="Meeting" style={{marginTop:'1em'}}/>
                                             <Grid item xl={12} md={12} sm={12} xs={12} >
                                                 <Button
                                                     variant="contained"
@@ -304,6 +324,7 @@ const DetailProject = (props) => {
                                         index={4}
                                         style={{ padding: '0.5em' }}>
                                         <Grid container >   
+                                            <CustomBreadCrumbs projectName={detailProject.title} tabName="Files" style={{marginTop:'1em'}}/>
                                             <Grid item xl={12} md={12} sm={12} xs={12} >
                                                 <Files projectId={detailProject.id} handleDetailTaskOpen={handleDetailTaskOpen} />
                                             </Grid>
@@ -319,18 +340,9 @@ const DetailProject = (props) => {
                                         value={tabState}
                                         index={5}
                                         style={{ padding: '0.5em' }}>
-                                        <Grid item xl={12} md={12} sm={12} xs={12} >
-                                            <ProjectInformations detailProject={detailProject} />
-                                            <Repositories/>
-                                        </Grid>
-                                        <Grid container >    
-                                            <Grid item xl={7} md={7} sm={12} xs={12} >
-                                                <MemberList projectId={params.id} data={detailProject.members} handleDetailTaskOpen={handleDetailTaskOpen} />
-                                            </Grid>
-                                            <Grid item xl={5} md={5} sm={12} xs={12} >
-                                                <RoleList projectId={params.id} />
-                                            </Grid>
-                                        </Grid>
+                                        <CustomBreadCrumbs projectName={detailProject.title} tabName="Others" style={{marginTop:'1em'}}/>
+                                        <Others detailProject={detailProject} 
+                                            handleDetailTaskOpen={handleDetailTaskOpen}/>
                                     </TabPanel>
                                 )
                             }} />
@@ -355,6 +367,22 @@ const DetailProject = (props) => {
         </Router>
     );
 }
-
-
+const CustomBreadCrumbs=({projectName,tabName})=>{
+    return(
+        <Grid lg={12} md={12} sm={12} xs={12} item>
+            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label={projectName}>
+                <Button component={Link}  color="primary"
+                    to="/">
+                    Projects
+                </Button>
+                <Typography>
+                    {projectName}
+                </Typography>
+                <Typography>
+                    {tabName}
+                </Typography>
+            </Breadcrumbs>
+        </Grid>
+    )
+}
 export default DetailProject;

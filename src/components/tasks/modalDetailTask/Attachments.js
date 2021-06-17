@@ -63,7 +63,6 @@ const Attachments = (props) => {
     var payload = { projectId: projectId, listId: listId, taskId: taskId }
 
     const { enqueueSnackbar } = useSnackbar();
-
     const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
 
     useEffect(() => {
@@ -119,7 +118,7 @@ const Attachments = (props) => {
             <ModalFilePicker 
                 open={chooseFileModalOpen} 
                 projectId={projectId} 
-                handleClose={()=> setChooseFileModalOpen(false) }
+                closeModal={()=> setChooseFileModalOpen(false) }
                 onPick={(file)=> handleFilePick(file,global,handleSnackbar,setChooseFileModalOpen,payload,setData,data) }/>
             <ModalDeleteConfirm
                 open={deleteConfirmOpen}
@@ -205,6 +204,7 @@ const handleAddAttachment=(body,  global, snackbar,setOpen, payload,  setData, d
 }
 
 const deleteFile = (global, payload, snackbar, setConfirmOpen, setData, data) => {
+    console.log('delete file');
     const config = { mode: 'no-cors', crossdomain: true }
     const url = `${process.env.REACT_APP_BACK_END_BASE_URL}task-attachments/${payload.id}`;
     global.dispatch({ type: 'remove-attachment', payload: payload });

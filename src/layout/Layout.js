@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, memo } from 'react';
 import clsx from 'clsx'; import 'fontsource-roboto';
 import Footer from './Footer'; import UserMenu from './auth/UserMenu';
-import { BrowserRouter as Router, Route, Switch, withRouter, Redirect } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import { MainListItems, SecondaryListItems } from './NavItems';
 import AppBar from '@material-ui/core/AppBar';
 import List from '@material-ui/core/List';
@@ -15,7 +15,8 @@ import IconButton from '@material-ui/core/IconButton';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Toolbar from '@material-ui/core/Toolbar';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'; 
-import NotificationsIcon from '@material-ui/icons/Notifications'; import MenuIcon from '@material-ui/icons/Menu';
+import NotificationsIcon from '@material-ui/icons/Notifications'; 
+import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
 import styleConfig from './Theme';
 import UserContext from '../context/UserContext';
@@ -34,7 +35,6 @@ const Layout = (props) => {
     }, [])
     
     const handleDrawerOpen = () => setDrawerOpen(true);
-
     const handleDrawerClose = () => setDrawerOpen(false);
 
     return (
@@ -54,11 +54,13 @@ const Layout = (props) => {
                             <MenuIcon />
                         </IconButton>
                         <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>Pro-M</Typography>
+                        {/* 
                         <IconButton color="inherit">
                             <Badge badgeContent={4} color="secondary">
                                 <NotificationsIcon />
                             </Badge>
-                        </IconButton>
+                        </IconButton> 
+                        */}
                         <UserMenu></UserMenu>
                     </Toolbar>
                 </AppBar>
@@ -86,7 +88,7 @@ const Layout = (props) => {
                 <main className={classes.content}>
                     <div className={classes.appBarSpacer} />
                     <Container maxWidth="lg" className={classes.container}>
-                        <Grid container spacing={3}>
+                        <Grid container spacing={3} style={{ marginLeft:'0.5em'}}>
                             {props.children}
                             <Footer />
                         </Grid>

@@ -228,7 +228,7 @@ const Files = (props) => {
                 }else{
                     return(
                         <Grid xl={12} lg={12} sm={12} xs={12}>
-                            <Alert severity="info" style={{padding:'auto'}}>No files have been uploaded to this project yet</Alert>
+                            <Alert severity="info" style={{margin:'1em',padding:'auto'}}>No files have been uploaded to this project yet</Alert>
                         </Grid>
                     )
                 }

@@ -89,7 +89,7 @@ function EnhancedTableHead(props) {
     );
 }
 
-export default function EnhancedTable() {
+export default function EnhancedTable({data}) {
     const classes = useStyles();
     const [rows, setRows] = useState([]);
     const [order, setOrder] = useState('asc');
@@ -104,26 +104,15 @@ export default function EnhancedTable() {
     const { enqueueSnackbar } = useSnackbar();
     const handleSnackbar = (message, variant) => enqueueSnackbar(message, { variant });
 
-    const getTasks = () => {
-        const config = { mode: 'no-cors', crossdomain: true, }
-        const url = process.env.REACT_APP_BACK_END_BASE_URL + 'user/' + global.state.id + '/tasks';
-        axios.defaults.headers.common['Authorization'] = global.state.token;
-        axios.defaults.headers.post['Content-Type'] = 'application/json';
-        axios.get(url, {}, config)
-            .then((result) => {
-                setRows(result.data);
-            }).catch((error) => {
-                const payload = { error: error, snackbar: null, dispatch: global.dispatch, history: null }
-                global.dispatch({ type: 'handle-fetch-error', payload: payload });
-            });
-    }
-
-
     const handleModalOpen = (taskInfo) => {
         const { projectId, listId, taskId, open } = taskInfo;
         setModalOpen(open);
         setClickedTask({ projectId: projectId, listId: listId, taskId: taskId });
     }
+
+    useEffect(()=>{
+        setRows(data)
+    },[data])
 
     const showModalDetailTask = () => {
         if (clickedTask.taskId != null && clickedTask.taskId !== undefined && modalOpen == true) {
@@ -134,7 +123,7 @@ export default function EnhancedTable() {
                         handleModalOpen({ projectId: null, listId: null, taskId: null, open: false })
                     }}
                     projectId={clickedTask.projectId}
-                    data={clickedTask} />
+                    initialState={clickedTask} />
             )
         }
     }
@@ -164,10 +153,6 @@ export default function EnhancedTable() {
 
         }
     }
-    useEffect(() => {
-        getTasks();
-    }, []);
-
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
